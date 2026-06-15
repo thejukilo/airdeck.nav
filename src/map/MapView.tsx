@@ -36,12 +36,12 @@ interface Props {
   ownship: Ownship | null;
   metars: Metar[];
   windField: WindPoint[];
+  airspaces: AeroData["airspaces"];
   layersVisible: Record<LayerId, boolean>;
   follow: boolean;
   /** names of airspaces the ownship is currently inside (highlighted) */
   activeAirspaces: string[];
   onSelect: (f: SelectedFeature | null) => void;
-  onAirspaces: (fc: AeroData["airspaces"]) => void;
 }
 
 const QUERY_LAYERS = [
@@ -65,11 +65,11 @@ function MapViewInner(
     ownship,
     metars,
     windField,
+    airspaces,
     layersVisible,
     follow,
     activeAirspaces,
     onSelect,
-    onAirspaces,
   }: Props,
   ref: Ref<MapHandle>,
 ) {
@@ -113,10 +113,10 @@ function MapViewInner(
         const data = await loadAeroData(DEFAULT_BBOX);
         addAeroLayers(map, data);
         readyRef.current = true;
-        onAirspaces(data.airspaces);
         // Apply any state that changed before load finished.
         applyVisibility();
         applyActive();
+        pushAirspaces();
         pushMetars();
         pushWindField();
       } catch (err) {
@@ -171,9 +171,9 @@ function MapViewInner(
         const data = await loadAeroData(DEFAULT_BBOX);
         addAeroLayers(map, data);
         readyRef.current = true;
-        onAirspaces(data.airspaces);
         applyVisibility();
         applyActive();
+        pushAirspaces();
         pushOwnship();
         pushMetars();
         pushWindField();
@@ -230,6 +230,15 @@ function MapViewInner(
     }
   }
   useEffect(pushOwnship, [ownship, follow]);
+
+  // --- Airspace (scoped, App-driven) --------------------------------------
+  function pushAirspaces() {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const src = map.getSource("airspaces") as maplibregl.GeoJSONSource | undefined;
+    src?.setData(airspaces);
+  }
+  useEffect(pushAirspaces, [airspaces]);
 
   // --- Weather (METAR) ----------------------------------------------------
   function pushMetars() {

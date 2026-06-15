@@ -11,12 +11,23 @@ import { SimControl } from "./components/SimControl";
 import { useOwnship, type PositionMode } from "./nav/useOwnship";
 import { computeAwareness, type Awareness } from "./nav/airspace";
 import { fetchMetars, fetchWindField, type Metar, type WindPoint } from "./data/weather";
+import { fetchAirspaces } from "./data/aero";
 import { DEFAULT_BBOX } from "./data/region";
 import type { BaseMap } from "./map/style";
-import type { AirspaceProps, LayerId } from "./data/aero";
+import type { AeroData, AirspaceProps, LayerId } from "./data/aero";
 
 const METAR_REFRESH_MS = 5 * 60 * 1000;
 const AWARENESS_MS = 1000;
+// Airspace is fetched in a window around the aircraft and refreshed as it
+// moves, so the openAIP 1000-feature cap never drops nearby airspace.
+const AIRSPACE_PAD_DEG = 1.2;
+const AIRSPACE_MOVE_DEG = 0.5;
+const AIRSPACE_CHECK_MS = 3000;
+
+const EMPTY_AIRSPACES: AeroData["airspaces"] = {
+  type: "FeatureCollection",
+  features: [],
+};
 
 type AirspaceFeature = Feature<Polygon | MultiPolygon, AirspaceProps>;
 
@@ -28,6 +39,7 @@ export default function App() {
   const [metars, setMetars] = useState<Metar[]>([]);
   const [windField, setWindField] = useState<WindPoint[]>([]);
   const [awareness, setAwareness] = useState<Awareness | null>(null);
+  const [airspaces, setAirspaces] = useState<AeroData["airspaces"]>(EMPTY_AIRSPACES);
   const [layersVisible, setLayersVisible] = useState<Record<LayerId, boolean>>({
     chart: true,
     restrictions: true,
@@ -56,6 +68,42 @@ export default function App() {
   const shipRef = useRef(ship);
   shipRef.current = ship;
   const airspacesRef = useRef<AirspaceFeature[]>([]);
+  const fetchCenterRef = useRef<{ lng: number; lat: number } | null>(null);
+  const simStartRef = useRef(simStart);
+  simStartRef.current = simStart;
+
+  // Keep airspace loaded in a window around the aircraft.
+  useEffect(() => {
+    let active = true;
+    const maybeFetch = () => {
+      const s = shipRef.current;
+      const c = s ? s.pos : simStartRef.current;
+      const last = fetchCenterRef.current;
+      const moved =
+        !last ||
+        Math.abs(c.lng - last.lng) > AIRSPACE_MOVE_DEG ||
+        Math.abs(c.lat - last.lat) > AIRSPACE_MOVE_DEG;
+      if (!moved) return;
+      fetchCenterRef.current = { lng: c.lng, lat: c.lat };
+      const bbox: [number, number, number, number] = [
+        c.lng - AIRSPACE_PAD_DEG,
+        c.lat - AIRSPACE_PAD_DEG,
+        c.lng + AIRSPACE_PAD_DEG,
+        c.lat + AIRSPACE_PAD_DEG,
+      ];
+      fetchAirspaces(bbox).then((fc) => {
+        if (!active) return;
+        setAirspaces(fc);
+        airspacesRef.current = fc.features as AirspaceFeature[];
+      });
+    };
+    maybeFetch();
+    const id = setInterval(maybeFetch, AIRSPACE_CHECK_MS);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, []);
 
   // UI theme follows the base map (night = dark chrome).
   useEffect(() => {
@@ -102,13 +150,11 @@ export default function App() {
         ownship={ship}
         metars={metars}
         windField={windField}
+        airspaces={airspaces}
         layersVisible={layersVisible}
         follow={follow}
         activeAirspaces={activeAirspaces}
         onSelect={setSelected}
-        onAirspaces={(fc) => {
-          airspacesRef.current = fc.features as AirspaceFeature[];
-        }}
       />
 
       <Hud ship={ship} />

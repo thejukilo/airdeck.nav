@@ -78,10 +78,12 @@ async function loadAirports(
 }
 
 /**
- * Airspace comes from the live /api/airspaces function (openAIP). Falls back to
- * the bundled sample when the API key isn't set or the call fails.
+ * Airspace comes from the live /api/airspaces function (openAIP). Fetched for a
+ * window around the aircraft (not the whole continent) so the 1000-feature API
+ * cap never truncates the airspace you actually care about. Falls back to the
+ * bundled sample when the API key isn't set or the call fails.
  */
-async function loadAirspaces(
+export async function fetchAirspaces(
   bbox: [number, number, number, number],
 ): Promise<AeroData["airspaces"]> {
   try {
@@ -96,16 +98,21 @@ async function loadAirspaces(
   return load<AeroData["airspaces"]>("/data/airspaces.geojson");
 }
 
+const EMPTY_AIRSPACES: AeroData["airspaces"] = {
+  type: "FeatureCollection",
+  features: [],
+};
+
 export async function loadAeroData(
   bbox: [number, number, number, number],
 ): Promise<AeroData> {
-  const [airports, navaids, airspaces] = await Promise.all([
+  const [airports, navaids] = await Promise.all([
     loadAirports(bbox),
     // Navaids are a bundled sample for now.
     load<AeroData["navaids"]>("/data/navaids.geojson"),
-    loadAirspaces(bbox),
   ]);
-  return { airports, navaids, airspaces };
+  // Airspace is loaded separately (App-driven, scoped to the aircraft).
+  return { airports, navaids, airspaces: EMPTY_AIRSPACES };
 }
 
 /** Layers the user can toggle, with the swatch color shown in the UI. */
