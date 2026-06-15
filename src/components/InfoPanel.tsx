@@ -61,6 +61,10 @@ export function InfoPanel({ feature, onClose, onSetRoute }: Props) {
     if (p.tempC != null) items.push({ k: "Temp", v: `${Math.round(Number(p.tempC))}°C` });
     if (p.dewpC != null) items.push({ k: "Dewpoint", v: `${Math.round(Number(p.dewpC))}°C` });
     if (p.qnhHpa != null) items.push({ k: "QNH", v: `${Math.round(Number(p.qnhHpa))} hPa` });
+  } else if (feature.kind === "reporting") {
+    title = String(p.name ?? "");
+    tag = "VFR POINT";
+    sub = p.compulsory ? "Compulsory" : "On request";
   } else if (feature.kind === "navaid") {
     title = String(p.ident ?? "");
     sub = String(p.name ?? "");

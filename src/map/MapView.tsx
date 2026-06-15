@@ -18,11 +18,11 @@ import {
 import { loadAeroData } from "../data/aero";
 import { DEFAULT_BBOX } from "../data/region";
 import type { Ownship } from "../nav/useOwnship";
-import type { AeroData, LayerId } from "../data/aero";
+import type { AeroData, LayerId, ReportingPoints } from "../data/aero";
 import type { Metar, WindPoint } from "../data/weather";
 
 export interface SelectedFeature {
-  kind: "airport" | "navaid" | "airspace" | "weather";
+  kind: "airport" | "navaid" | "airspace" | "weather" | "reporting";
   properties: Record<string, unknown>;
   lngLat?: { lng: number; lat: number };
 }
@@ -39,6 +39,7 @@ interface Props {
   metars: Metar[];
   windField: WindPoint[];
   airspaces: AeroData["airspaces"];
+  reportingPoints: ReportingPoints;
   route: FeatureCollection<LineString>;
   layersVisible: Record<LayerId, boolean>;
   follow: boolean;
@@ -49,6 +50,7 @@ interface Props {
 
 const QUERY_LAYERS = [
   "airports-symbol",
+  "reporting-symbol",
   "weather-circle",
   "airspaces-fill",
 ] as const;
@@ -69,6 +71,7 @@ function MapViewInner(
     metars,
     windField,
     airspaces,
+    reportingPoints,
     route,
     layersVisible,
     follow,
@@ -121,6 +124,7 @@ function MapViewInner(
         applyVisibility();
         applyActive();
         pushAirspaces();
+        pushReporting();
         pushRoute();
         pushMetars();
         pushWindField();
@@ -146,7 +150,9 @@ function MapViewInner(
             ? "navaid"
             : f.layer.id === "weather-circle"
               ? "weather"
-              : "airspace";
+              : f.layer.id === "reporting-symbol"
+                ? "reporting"
+                : "airspace";
       const lngLat =
         f.geometry.type === "Point"
           ? { lng: f.geometry.coordinates[0], lat: f.geometry.coordinates[1] }
@@ -183,6 +189,7 @@ function MapViewInner(
         applyVisibility();
         applyActive();
         pushAirspaces();
+        pushReporting();
         pushRoute();
         pushOwnship();
         pushMetars();
@@ -249,6 +256,15 @@ function MapViewInner(
     src?.setData(airspaces);
   }
   useEffect(pushAirspaces, [airspaces]);
+
+  // --- Reporting points ---------------------------------------------------
+  function pushReporting() {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const src = map.getSource("reporting") as maplibregl.GeoJSONSource | undefined;
+    src?.setData(reportingPoints);
+  }
+  useEffect(pushReporting, [reportingPoints]);
 
   // --- Route line ---------------------------------------------------------
   function pushRoute() {

@@ -40,6 +40,10 @@ export function addAeroLayers(map: MlMap, data: AeroData) {
     type: "geojson",
     data: { type: "FeatureCollection", features: [] },
   });
+  map.addSource("reporting", {
+    type: "geojson",
+    data: { type: "FeatureCollection", features: [] },
+  });
 
   // --- openAIP rendered chart overlay (airspace bands, navaids, reporting
   //     points, airports) on top of the topo base. Proxied to keep the key
@@ -155,6 +159,38 @@ export function addAeroLayers(map: MlMap, data: AeroData) {
     minzoom: 6,
   });
 
+  // --- VFR reporting points (openAIP rpp) ---------------------------------
+  map.addLayer({
+    id: "reporting-symbol",
+    type: "circle",
+    source: "reporting",
+    paint: {
+      "circle-radius": 5,
+      // Compulsory points filled; on-request points hollow.
+      "circle-color": ["case", ["get", "compulsory"], "#d24bd2", "rgba(210,75,210,0.15)"],
+      "circle-stroke-color": "#d24bd2",
+      "circle-stroke-width": 2,
+    },
+  });
+  map.addLayer({
+    id: "reporting-label",
+    type: "symbol",
+    source: "reporting",
+    layout: {
+      "text-field": ["get", "name"],
+      "text-size": 12,
+      "text-font": ["Noto Sans Bold"],
+      "text-offset": [0, 1.1],
+      "text-anchor": "top",
+    },
+    paint: {
+      "text-color": "#a02ea0",
+      "text-halo-color": "#ffffff",
+      "text-halo-width": 1.6,
+    },
+    minzoom: 8,
+  });
+
   // --- Weather (live METAR: wind + flight category) -----------------------
   const catColor: ExpressionSpecification = [
     "match",
@@ -236,6 +272,7 @@ export function addAeroLayers(map: MlMap, data: AeroData) {
 const AERO_LAYER_IDS: Record<string, string[]> = {
   chart: ["aipchart"],
   restrictions: ["airspaces-fill", "airspaces-active", "airspaces-restrict-label"],
+  reporting: ["reporting-symbol", "reporting-label"],
   airports: ["airports-symbol", "airports-label"],
   weather: ["weather-circle"],
   wind: ["windfield-arrow", "windfield-label"],

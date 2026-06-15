@@ -45,6 +45,13 @@ export interface AirspaceProps {
   upper: string;
 }
 
+export interface ReportingPointProps {
+  name: string;
+  compulsory?: boolean;
+}
+
+export type ReportingPoints = FeatureCollection<Point, ReportingPointProps>;
+
 export interface AeroData {
   airports: FeatureCollection<Point, AirportProps>;
   navaids: FeatureCollection<Point, NavaidProps>;
@@ -98,6 +105,19 @@ export async function fetchAirspaces(
   return load<AeroData["airspaces"]>("/data/airspaces.geojson");
 }
 
+/** VFR reporting points (openAIP rpp), scoped to a window around the aircraft. */
+export async function fetchReportingPoints(
+  bbox: [number, number, number, number],
+): Promise<ReportingPoints> {
+  try {
+    const res = await fetch(`/api/reporting-points?bbox=${bbox.join(",")}`);
+    if (res.ok) return (await res.json()) as ReportingPoints;
+  } catch {
+    /* ignore */
+  }
+  return { type: "FeatureCollection", features: [] };
+}
+
 const EMPTY_AIRSPACES: AeroData["airspaces"] = {
   type: "FeatureCollection",
   features: [],
@@ -119,6 +139,7 @@ export async function loadAeroData(
 export const LAYER_DEFS = [
   { id: "chart", label: "Aero chart", color: "#7aa7ff" },
   { id: "restrictions", label: "Restriction labels", color: "#ff7a7a" },
+  { id: "reporting", label: "Reporting points", color: "#d24bd2" },
   { id: "wind", label: "Wind", color: "#7fd0ff" },
   { id: "weather", label: "Airport weather", color: "#33d17a" },
   { id: "airports", label: "Airports", color: "#34d1bf" },

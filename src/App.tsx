@@ -14,10 +14,10 @@ import { useOwnship, type PositionMode } from "./nav/useOwnship";
 import { computeAwareness, type Awareness } from "./nav/airspace";
 import { planRoute, type RoutePlan, type Waypoint } from "./nav/route";
 import { fetchMetars, fetchWindField, type Metar, type WindPoint } from "./data/weather";
-import { fetchAirspaces } from "./data/aero";
+import { fetchAirspaces, fetchReportingPoints } from "./data/aero";
 import { DEFAULT_BBOX } from "./data/region";
 import type { BaseMap } from "./map/style";
-import type { AeroData, AirspaceProps, LayerId } from "./data/aero";
+import type { AeroData, AirspaceProps, LayerId, ReportingPoints } from "./data/aero";
 
 const METAR_REFRESH_MS = 5 * 60 * 1000;
 const AWARENESS_MS = 1000;
@@ -47,6 +47,10 @@ export default function App() {
   const [windField, setWindField] = useState<WindPoint[]>([]);
   const [awareness, setAwareness] = useState<Awareness | null>(null);
   const [airspaces, setAirspaces] = useState<AeroData["airspaces"]>(EMPTY_AIRSPACES);
+  const [reportingPoints, setReportingPoints] = useState<ReportingPoints>({
+    type: "FeatureCollection",
+    features: [],
+  });
   const [routeFrom, setRouteFrom] = useState<Waypoint | null>(null);
   const [routeTo, setRouteTo] = useState<Waypoint | null>(null);
   const [routePlan, setRoutePlan] = useState<RoutePlan | null>(null);
@@ -55,6 +59,7 @@ export default function App() {
   const [layersVisible, setLayersVisible] = useState<Record<LayerId, boolean>>({
     chart: true,
     restrictions: true,
+    reporting: true,
     wind: true,
     weather: true,
     airports: true,
@@ -108,6 +113,7 @@ export default function App() {
         setAirspaces(fc);
         airspacesRef.current = fc.features as AirspaceFeature[];
       });
+      fetchReportingPoints(bbox).then((fc) => active && setReportingPoints(fc));
     };
     maybeFetch();
     const id = setInterval(maybeFetch, AIRSPACE_CHECK_MS);
@@ -205,6 +211,7 @@ export default function App() {
         metars={metars}
         windField={windField}
         airspaces={airspaces}
+        reportingPoints={reportingPoints}
         route={routeLine}
         layersVisible={layersVisible}
         follow={follow}
