@@ -29,6 +29,7 @@ export default function App() {
   const [awareness, setAwareness] = useState<Awareness | null>(null);
   const [layersVisible, setLayersVisible] = useState<Record<LayerId, boolean>>({
     chart: true,
+    restrictions: true,
     wind: true,
     weather: true,
     airports: true,
@@ -97,13 +98,15 @@ export default function App() {
       />
 
       <Hud ship={ship} />
-      <LayerControl
-        visible={layersVisible}
-        onToggle={toggleLayer}
-        base={basemap}
-        onBase={setBasemap}
-      />
-      <AwarenessPanel awareness={awareness} />
+      <div className="left-col">
+        <LayerControl
+          visible={layersVisible}
+          onToggle={toggleLayer}
+          base={basemap}
+          onBase={setBasemap}
+        />
+        <AwarenessPanel awareness={awareness} />
+      </div>
 
       <Toolbar
         follow={follow}

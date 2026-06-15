@@ -7,19 +7,17 @@ import type { AeroData } from "../data/aero";
  * after the style loads.
  */
 
-// Airspace fill color keyed by category.
+// Airspace color keyed by category.
 const airspaceColor: ExpressionSpecification = [
   "match",
   ["get", "category"],
-  "ctr",
-  "#ff7a7a",
-  "tma",
-  "#7aa7ff",
-  "restricted",
-  "#ff5d5d",
-  "danger",
-  "#ffb454",
-  "#9aa7b3",
+  "restricted", "#e23030",
+  "danger", "#e07b00",
+  "prohibited", "#c01010",
+  "ctr", "#c026d3",
+  "tma", "#2563eb",
+  "rmz", "#0e9aa7",
+  "#7a8a99",
 ];
 
 export function addAeroLayers(map: MlMap, data: AeroData) {
@@ -62,7 +60,16 @@ export function addAeroLayers(map: MlMap, data: AeroData) {
     source: "airspaces",
     paint: {
       "fill-color": airspaceColor,
-      "fill-opacity": ["case", ["==", ["get", "category"], "restricted"], 0.08, 0.01],
+      "fill-opacity": [
+        "match",
+        ["get", "category"],
+        "restricted", 0.14,
+        "danger", 0.12,
+        "prohibited", 0.18,
+        "ctr", 0.07,
+        "tma", 0.05,
+        0.0,
+      ],
     },
   });
   // Bright highlight for the airspace(s) the ownship is currently inside.
@@ -72,6 +79,38 @@ export function addAeroLayers(map: MlMap, data: AeroData) {
     source: "airspaces",
     filter: ["in", ["get", "name"], ["literal", []]],
     paint: { "line-color": "#ffd23f", "line-width": 3, "line-opacity": 0.95 },
+  });
+  // Large, legible altitude-band label inside each restriction/controlled area.
+  map.addLayer({
+    id: "airspaces-restrict-label",
+    type: "symbol",
+    source: "airspaces",
+    filter: [
+      "in",
+      ["get", "category"],
+      ["literal", ["restricted", "danger", "prohibited", "ctr", "tma"]],
+    ],
+    layout: {
+      "symbol-placement": "point",
+      "text-field": [
+        "format",
+        ["get", "name"], { "font-scale": 0.82 },
+        "\n", {},
+        ["concat", ["get", "lower"], " – ", ["get", "upper"]], { "font-scale": 1.15 },
+      ],
+      "text-font": ["Noto Sans Bold"],
+      "text-size": 13,
+      "text-line-height": 1.3,
+      "text-padding": 4,
+      "text-allow-overlap": false,
+    },
+    paint: {
+      "text-color": airspaceColor,
+      "text-halo-color": "#ffffff",
+      "text-halo-width": 2,
+      "text-halo-blur": 0.5,
+    },
+    minzoom: 8,
   });
 
   // --- Route (built by flight planner; empty for now) ---------------------
@@ -196,6 +235,7 @@ export function addAeroLayers(map: MlMap, data: AeroData) {
 
 const AERO_LAYER_IDS: Record<string, string[]> = {
   chart: ["aipchart"],
+  restrictions: ["airspaces-fill", "airspaces-active", "airspaces-restrict-label"],
   airports: ["airports-symbol", "airports-label"],
   weather: ["weather-circle"],
   wind: ["windfield-arrow", "windfield-label"],

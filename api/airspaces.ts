@@ -23,19 +23,26 @@ const TYPE_NAME: Record<number, string> = {
 const CLASS: Record<number, string> = {
   0: "A", 1: "B", 2: "C", 3: "D", 4: "E", 5: "F", 6: "G", 8: "UNCL",
 };
-const UNIT: Record<number, string> = { 0: "m", 1: "ft", 6: "FL" };
-const DATUM: Record<number, string> = { 0: "GND", 1: "MSL", 2: "STD" };
+const UNIT_FL = 6; // openAIP altitude unit: 6 = flight level
+const DATUM: Record<number, string> = { 0: "AGL", 1: "MSL", 2: "STD" };
 
 type Limit = { value?: number; unit?: number | string; referenceDatum?: number | string };
 
 const typeName = (t: unknown): string =>
   typeof t === "string" ? t : TYPE_NAME[t as number] ?? "Airspace";
 
+/**
+ * Category drives styling AND what counts as a "restriction" for the awareness
+ * engine. FIR/UIR and anything unrecognised are deliberately NOT restrictions —
+ * they're information regions you're always inside, not airspace to avoid.
+ */
 function category(t: unknown): string {
   const n = (typeof t === "string" ? t : TYPE_NAME[t as number] ?? "").toUpperCase();
   if (["RESTRICTED", "DANGER", "PROHIBITED"].includes(n)) return "restricted";
-  if (n === "CTR") return "ctr";
-  if (["TMA", "CTA", "TIA", "FIR", "UIR"].includes(n)) return "tma";
+  if (["CTR", "ATZ"].includes(n)) return "ctr";
+  if (["TMA", "CTA", "TIA"].includes(n)) return "tma";
+  if (["RMZ", "TMZ"].includes(n)) return "rmz";
+  if (["FIR", "UIR"].includes(n)) return "fir";
   return "other";
 }
 
@@ -45,15 +52,16 @@ const icaoClass = (c: unknown): string =>
 function fmtLimit(l: Limit | string | undefined): string {
   if (!l) return "";
   if (typeof l === "string") return l;
-  const unit = typeof l.unit === "string" ? l.unit : UNIT[l.unit as number] ?? "ft";
+  const v = l.value ?? 0;
+  const isFL =
+    l.unit === UNIT_FL || (typeof l.unit === "string" && l.unit.toUpperCase() === "FL");
   const datum =
     typeof l.referenceDatum === "string"
-      ? l.referenceDatum
-      : DATUM[l.referenceDatum as number] ?? "";
-  const v = l.value ?? 0;
-  if (unit === "FL") return `FL${v}`;
-  if (v === 0 && datum === "GND") return "GND";
-  return `${v} ${unit}${datum ? ` ${datum}` : ""}`;
+      ? l.referenceDatum.toUpperCase()
+      : DATUM[l.referenceDatum as number] ?? "MSL";
+  if (isFL) return `FL${v}`;
+  if (v === 0 && datum === "AGL") return "GND";
+  return `${v} ${datum}`;
 }
 
 function json(body: unknown, sMaxAge = 0, status = 200): Response {

@@ -107,6 +107,10 @@ function verticalOf(altFt: number, floorFt: number, ceilFt: number): Vertical {
 const AHEAD_NM = 25; // look-ahead distance along track
 const STEP_NM = 0.5;
 
+// Only these categories are "restrictions" worth surfacing. FIR/UIR/RMZ and
+// anything unclassified are information regions, not airspace to avoid.
+const RELEVANT = new Set(["restricted", "danger", "prohibited", "ctr", "tma"]);
+
 export function computeAwareness(
   ship: Ownship,
   features: Poly[],
@@ -114,9 +118,9 @@ export function computeAwareness(
   const inside: AirspaceHit[] = [];
   const ahead: AirspaceHit[] = [];
 
-  // Pre-filter to airspaces whose bbox is near the ownship / forward corridor.
+  // Pre-filter to relevant airspaces whose bbox is near the ownship / corridor.
   const near = features
-    .filter((f) => f.geometry)
+    .filter((f) => f.geometry && RELEVANT.has(f.properties.category))
     .map((f) => ({ f, bbox: bboxOf(f.geometry) }))
     .filter(({ bbox }) => {
       // ~30 NM padding in degrees (rough; latitude-dependent but fine for filtering)

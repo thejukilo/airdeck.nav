@@ -179,16 +179,26 @@ button {
 }
 
 /* ---- Layer control ----------------------------------------------------- */
-.layers {
+/* Left column: layers panel + awareness panel stacked (never overlapping). */
+.left-col {
   position: absolute;
   top: max(12px, env(safe-area-inset-top));
   left: max(12px, env(safe-area-inset-left));
   z-index: 20;
   display: flex;
   flex-direction: column;
-  width: 248px;
+  gap: 8px;
+  width: 276px;
   max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+}
+
+.layers {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   overflow: hidden;
+  flex: 0 0 auto;
 }
 
 .layers-head {
@@ -437,13 +447,9 @@ button {
 
 /* ---- Airspace awareness panel (left, below layers) --------------------- */
 .aware {
-  position: absolute;
-  left: max(12px, env(safe-area-inset-left));
-  top: 84px;
-  z-index: 20;
-  width: 268px;
-  max-width: calc(100vw - 24px);
-  max-height: calc(100vh - 200px);
+  width: 100%;
+  flex: 0 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding: 6px;
 }

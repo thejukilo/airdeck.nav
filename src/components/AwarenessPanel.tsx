@@ -13,20 +13,29 @@ function fmtEte(min?: number) {
   return min < 1 ? "<1 min" : `${Math.round(min)} min`;
 }
 
-function aheadAdvice(h: AirspaceHit): { text: string; level: "ok" | "warn" | "danger" } {
-  if (h.vertical === "inside") {
-    return { text: `Conflict — divert, or climb >${h.upper} / descend <${h.lower}`, level: "danger" };
+type Level = "ok" | "warn" | "danger";
+
+const isRestricted = (c: string) =>
+  c === "restricted" || c === "danger" || c === "prohibited";
+
+function aheadAdvice(h: AirspaceHit): { text: string; level: Level } {
+  // You'll cross laterally but your level keeps you clear.
+  if (h.vertical === "below") return { text: `Stays clear below ${h.lower}`, level: "ok" };
+  if (h.vertical === "above") return { text: `Stays clear above ${h.upper}`, level: "ok" };
+  // At your current altitude you'd enter it.
+  if (isRestricted(h.category)) {
+    return { text: "Restricted — avoid or confirm not active", level: "danger" };
   }
-  if (h.vertical === "below") {
-    return { text: `Clear if you stay below ${h.lower}`, level: "warn" };
-  }
-  return { text: `Clear if you stay above ${h.upper}`, level: "ok" };
+  return {
+    text: `Controlled (Class ${h.class || "?"}) — clearance required`,
+    level: "warn",
+  };
 }
 
-function insideTag(h: AirspaceHit): { text: string; level: "ok" | "warn" | "danger" } {
-  if (h.vertical === "inside") return { text: "INSIDE", level: "danger" };
-  if (h.vertical === "below") return { text: "above you", level: "warn" };
-  return { text: "below you", level: "ok" };
+function insideTag(h: AirspaceHit): { text: string; level: Level } {
+  if (h.vertical === "above") return { text: "below you", level: "ok" };
+  if (h.vertical === "below") return { text: "above you", level: "ok" };
+  return { text: isRestricted(h.category) ? "RESTRICTED" : "INSIDE", level: "danger" };
 }
 
 export function AwarenessPanel({ awareness }: { awareness: Awareness | null }) {

@@ -7,7 +7,14 @@
  */
 import type { FeatureCollection, Point, Polygon } from "geojson";
 
-export type AirspaceCategory = "ctr" | "tma" | "restricted" | "danger" | "other";
+export type AirspaceCategory =
+  | "ctr"
+  | "tma"
+  | "restricted"
+  | "danger"
+  | "rmz"
+  | "fir"
+  | "other";
 export type AirportKind = "intl" | "ga";
 
 export interface AirportProps {
@@ -104,6 +111,7 @@ export async function loadAeroData(
 /** Layers the user can toggle, with the swatch color shown in the UI. */
 export const LAYER_DEFS = [
   { id: "chart", label: "Aero chart", color: "#7aa7ff" },
+  { id: "restrictions", label: "Restriction labels", color: "#ff7a7a" },
   { id: "wind", label: "Wind", color: "#7fd0ff" },
   { id: "weather", label: "Airport weather", color: "#33d17a" },
   { id: "airports", label: "Airports", color: "#34d1bf" },
