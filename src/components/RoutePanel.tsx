@@ -8,6 +8,8 @@ interface Props {
   to: Waypoint | null;
   plan: RoutePlan | null;
   gsKt: number;
+  minAltFt: number;
+  onMinAlt: (delta: number) => void;
   onClear: () => void;
   onFly: () => void;
 }
@@ -15,7 +17,16 @@ interface Props {
 const chipLevel = (c: string) =>
   c === "restricted" || c === "danger" || c === "prohibited" ? "danger" : "warn";
 
-export function RoutePanel({ from, to, plan, gsKt, onClear, onFly }: Props) {
+export function RoutePanel({
+  from,
+  to,
+  plan,
+  gsKt,
+  minAltFt,
+  onMinAlt,
+  onClear,
+  onFly,
+}: Props) {
   const { ref, style, handleProps } = useDraggable();
   if (!from && !to) return null;
 
@@ -40,6 +51,17 @@ export function RoutePanel({ from, to, plan, gsKt, onClear, onFly }: Props) {
           <span className="route-role">TO</span>
           <span className="route-icao">{to?.icao ?? "tap an airport"}</span>
         </div>
+      </div>
+
+      <div className="route-minalt">
+        <span className="route-minalt-label">Min cruise alt</span>
+        <button className="route-step" onClick={() => onMinAlt(-500)} aria-label="Lower minimum">
+          −
+        </button>
+        <span className="route-minalt-val">{minAltFt.toLocaleString()} ft</span>
+        <button className="route-step" onClick={() => onMinAlt(500)} aria-label="Raise minimum">
+          +
+        </button>
       </div>
 
       {plan && (

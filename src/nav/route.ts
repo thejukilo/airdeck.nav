@@ -52,11 +52,16 @@ const WEIGHT: Record<string, number> = {
   rmz: 1,
 };
 
-// Candidate VFR cruise altitudes (ft) to evaluate.
-const CANDIDATE_ALTS: number[] = [];
-for (let a = 1500; a <= 9500; a += 500) CANDIDATE_ALTS.push(a);
-
+const MAX_ALT = 9500; // top of the VFR band we evaluate
 const UNLIMITED = 99999;
+
+/** Candidate VFR cruise altitudes (ft), at or above the chosen minimum. */
+function candidateAlts(minFt: number): number[] {
+  const start = Math.max(0, Math.round(minFt / 500) * 500);
+  const alts: number[] = [];
+  for (let a = start; a <= Math.max(start, MAX_ALT); a += 500) alts.push(a);
+  return alts;
+}
 
 interface Crossed {
   props: AirspaceProps;
@@ -65,7 +70,12 @@ interface Crossed {
   weight: number;
 }
 
-export function planRoute(from: Waypoint, to: Waypoint, airspaces: Poly[]): RoutePlan {
+export function planRoute(
+  from: Waypoint,
+  to: Waypoint,
+  airspaces: Poly[],
+  minAltFt = 1500,
+): RoutePlan {
   const distanceNmVal = distanceNm(from, to);
   const brg = bearingDeg(from, to);
 
@@ -95,10 +105,12 @@ export function planRoute(from: Waypoint, to: Waypoint, airspaces: Poly[]): Rout
     }
   }
 
-  // Pick the altitude with the least total penalty (tie → lowest altitude).
-  let recommendedAltFt = CANDIDATE_ALTS[0];
+  // Pick the altitude (at/above the minimum) with the least total penalty
+  // (tie → lowest altitude).
+  const alts = candidateAlts(minAltFt);
+  let recommendedAltFt = alts[0];
   let bestScore = Infinity;
-  for (const alt of CANDIDATE_ALTS) {
+  for (const alt of alts) {
     const score = crossed.reduce(
       (s, c) => (alt >= c.floorFt && alt <= c.ceilFt ? s + c.weight : s),
       0,

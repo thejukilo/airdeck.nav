@@ -51,6 +51,7 @@ export default function App() {
   const [routeTo, setRouteTo] = useState<Waypoint | null>(null);
   const [routePlan, setRoutePlan] = useState<RoutePlan | null>(null);
   const [routeLine, setRouteLine] = useState<FeatureCollection<LineString>>(EMPTY_LINE);
+  const [routeMinAlt, setRouteMinAlt] = useState(2500);
   const [layersVisible, setLayersVisible] = useState<Record<LayerId, boolean>>({
     chart: true,
     restrictions: true,
@@ -165,14 +166,14 @@ export default function App() {
     ];
     fetchAirspaces(bbox).then((fc) => {
       if (!active) return;
-      const plan = planRoute(routeFrom, routeTo, fc.features as AirspaceFeature[]);
+      const plan = planRoute(routeFrom, routeTo, fc.features as AirspaceFeature[], routeMinAlt);
       setRoutePlan(plan);
       setRouteLine(plan.line);
     });
     return () => {
       active = false;
     };
-  }, [routeFrom, routeTo]);
+  }, [routeFrom, routeTo, routeMinAlt]);
 
   const toggleLayer = (id: LayerId) =>
     setLayersVisible((v) => ({ ...v, [id]: !v[id] }));
@@ -268,6 +269,8 @@ export default function App() {
         to={routeTo}
         plan={routePlan}
         gsKt={simGs}
+        minAltFt={routeMinAlt}
+        onMinAlt={(d) => setRouteMinAlt((a) => Math.max(0, Math.min(9500, a + d)))}
         onClear={() => {
           setRouteFrom(null);
           setRouteTo(null);

@@ -740,6 +740,45 @@ button {
   font-size: 18px;
 }
 
+.route-minalt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 6px 8px;
+  background: var(--surface-2);
+  border-radius: 10px;
+}
+
+.route-minalt-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.route-minalt-val {
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  min-width: 72px;
+  text-align: center;
+}
+
+.route-step {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.route-step:active {
+  background: rgba(52, 209, 191, 0.18);
+}
+
 .route-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
