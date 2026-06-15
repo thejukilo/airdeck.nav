@@ -34,6 +34,10 @@ export function addAeroLayers(map: MlMap, data: AeroData) {
     type: "geojson",
     data: { type: "FeatureCollection", features: [] },
   });
+  map.addSource("weather", {
+    type: "geojson",
+    data: { type: "FeatureCollection", features: [] },
+  });
 
   // --- Airspace -----------------------------------------------------------
   map.addLayer({
@@ -145,6 +149,65 @@ export function addAeroLayers(map: MlMap, data: AeroData) {
     minzoom: 6,
   });
 
+  // --- Weather (live METAR: wind + flight category) -----------------------
+  const catColor: ExpressionSpecification = [
+    "match",
+    ["get", "category"],
+    "VFR",
+    "#33d17a",
+    "MVFR",
+    "#4aa3ff",
+    "IFR",
+    "#ff5d5d",
+    "LIFR",
+    "#ff4fd8",
+    "#8aa0b2",
+  ];
+  map.addLayer({
+    id: "weather-circle",
+    type: "circle",
+    source: "weather",
+    paint: {
+      "circle-radius": 6,
+      "circle-color": catColor,
+      "circle-stroke-color": "#fff",
+      "circle-stroke-width": 1.5,
+      "circle-opacity": 0.9,
+    },
+  });
+  map.addLayer({
+    id: "weather-wind",
+    type: "symbol",
+    source: "weather",
+    // Arrow flies downwind (windDir is the FROM direction, so + 180).
+    filter: ["has", "windDir"],
+    layout: {
+      "icon-image": "wind-arrow",
+      "icon-size": 0.9,
+      "icon-rotate": ["+", ["get", "windDir"], 180],
+      "icon-rotation-alignment": "map",
+      "icon-allow-overlap": true,
+    },
+  });
+  map.addLayer({
+    id: "weather-label",
+    type: "symbol",
+    source: "weather",
+    layout: {
+      "text-field": ["concat", ["to-string", ["round", ["get", "windKt"]]], " kt"],
+      "text-size": 11,
+      "text-font": ["Noto Sans Bold"],
+      "text-offset": [0, 1.3],
+      "text-anchor": "top",
+    },
+    paint: {
+      "text-color": "#cfe8d8",
+      "text-halo-color": "rgba(11,22,34,0.85)",
+      "text-halo-width": 1.4,
+    },
+    minzoom: 7,
+  });
+
   // --- Ownship ------------------------------------------------------------
   map.addLayer({
     id: "ownship-symbol",
@@ -165,6 +228,7 @@ const AERO_LAYER_IDS: Record<string, string[]> = {
   airspaces: ["airspaces-fill", "airspaces-line", "airspaces-label"],
   airports: ["airports-symbol", "airports-label"],
   navaids: ["navaids-symbol", "navaids-label"],
+  weather: ["weather-circle", "weather-wind", "weather-label"],
 };
 
 export function setLayerVisible(map: MlMap, layerId: string, visible: boolean) {
@@ -193,5 +257,29 @@ export function makeOwnshipImage(): ImageData {
   ctx.lineWidth = 2;
   ctx.fill();
   ctx.stroke();
+  return ctx.getImageData(0, 0, size, size);
+}
+
+/** A slim wind arrow (points "up" at 0°; rotated per-feature by the layer). */
+export function makeWindArrowImage(): ImageData {
+  const size = 40;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d")!;
+  ctx.translate(size / 2, size / 2);
+  ctx.strokeStyle = "#ffffff";
+  ctx.fillStyle = "#ffffff";
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = "round";
+  ctx.beginPath(); // shaft
+  ctx.moveTo(0, 14);
+  ctx.lineTo(0, -10);
+  ctx.stroke();
+  ctx.beginPath(); // head
+  ctx.moveTo(0, -15);
+  ctx.lineTo(6, -6);
+  ctx.lineTo(-6, -6);
+  ctx.closePath();
+  ctx.fill();
   return ctx.getImageData(0, 0, size, size);
 }

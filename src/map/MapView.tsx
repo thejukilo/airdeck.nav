@@ -8,13 +8,20 @@ import {
 import maplibregl, { Map as MlMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { baseStyle, type Theme } from "./style";
-import { addAeroLayers, makeOwnshipImage, setLayerVisible } from "./layers";
+import {
+  addAeroLayers,
+  makeOwnshipImage,
+  makeWindArrowImage,
+  setLayerVisible,
+} from "./layers";
 import { loadAeroData } from "../data/aero";
+import { DEFAULT_BBOX } from "../data/region";
 import type { Ownship } from "../nav/useOwnship";
 import type { LayerId } from "../data/aero";
+import type { Metar } from "../data/weather";
 
 export interface SelectedFeature {
-  kind: "airport" | "navaid" | "airspace";
+  kind: "airport" | "navaid" | "airspace" | "weather";
   properties: Record<string, unknown>;
 }
 
@@ -26,6 +33,7 @@ export interface MapHandle {
 interface Props {
   theme: Theme;
   ownship: Ownship | null;
+  metars: Metar[];
   layersVisible: Record<LayerId, boolean>;
   follow: boolean;
   onSelect: (f: SelectedFeature | null) => void;
@@ -34,11 +42,21 @@ interface Props {
 const QUERY_LAYERS = [
   "airports-symbol",
   "navaids-symbol",
+  "weather-circle",
   "airspaces-fill",
 ] as const;
 
+function imagesFor(map: MlMap) {
+  if (!map.getImage("ownship-arrow")) {
+    map.addImage("ownship-arrow", makeOwnshipImage(), { pixelRatio: 2 });
+  }
+  if (!map.getImage("wind-arrow")) {
+    map.addImage("wind-arrow", makeWindArrowImage(), { pixelRatio: 2 });
+  }
+}
+
 function MapViewInner(
-  { theme, ownship, layersVisible, follow, onSelect }: Props,
+  { theme, ownship, metars, layersVisible, follow, onSelect }: Props,
   ref: Ref<MapHandle>,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -72,13 +90,14 @@ function MapViewInner(
     map.touchZoomRotate.enableRotation();
 
     map.on("load", async () => {
-      map.addImage("ownship-arrow", makeOwnshipImage(), { pixelRatio: 2 });
+      imagesFor(map);
       try {
-        const data = await loadAeroData();
+        const data = await loadAeroData(DEFAULT_BBOX);
         addAeroLayers(map, data);
         readyRef.current = true;
-        // Apply any visibility that was toggled before load finished.
+        // Apply any state that changed before load finished.
         applyVisibility();
+        pushMetars();
       } catch (err) {
         console.error("Failed to load aeronautical data", err);
       }
@@ -99,7 +118,9 @@ function MapViewInner(
           ? "airport"
           : f.layer.id === "navaids-symbol"
             ? "navaid"
-            : "airspace";
+            : f.layer.id === "weather-circle"
+              ? "weather"
+              : "airspace";
       onSelect({ kind, properties: f.properties ?? {} });
     });
 
@@ -124,15 +145,14 @@ function MapViewInner(
     readyRef.current = false;
     map.setStyle(baseStyle(theme));
     map.once("styledata", async () => {
-      if (!map.getImage("ownship-arrow")) {
-        map.addImage("ownship-arrow", makeOwnshipImage(), { pixelRatio: 2 });
-      }
+      imagesFor(map);
       try {
-        const data = await loadAeroData();
+        const data = await loadAeroData(DEFAULT_BBOX);
         addAeroLayers(map, data);
         readyRef.current = true;
         applyVisibility();
         pushOwnship();
+        pushMetars();
       } catch (err) {
         console.error(err);
       }
@@ -174,6 +194,36 @@ function MapViewInner(
     }
   }
   useEffect(pushOwnship, [ownship, follow]);
+
+  // --- Weather (METAR) ----------------------------------------------------
+  function pushMetars() {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const src = map.getSource("weather") as maplibregl.GeoJSONSource | undefined;
+    src?.setData({
+      type: "FeatureCollection",
+      features: metars.map((m) => ({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [m.lng, m.lat] },
+        properties: {
+          icao: m.icao,
+          name: m.name,
+          category: m.category,
+          windKt: m.windKt,
+          gustKt: m.gustKt,
+          visibSm: m.visibSm,
+          ceilingFt: m.ceilingFt,
+          tempC: m.tempC,
+          dewpC: m.dewpC,
+          qnhHpa: m.qnhHpa,
+          raw: m.raw,
+          // Only set windDir when known so the wind-arrow filter can skip calm.
+          ...(m.windDir != null && m.windKt > 0 ? { windDir: m.windDir } : {}),
+        },
+      })),
+    });
+  }
+  useEffect(pushMetars, [metars]);
 
   return <div ref={containerRef} className="map-root" />;
 }

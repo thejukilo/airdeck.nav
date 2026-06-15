@@ -33,13 +33,30 @@ export function InfoPanel({ feature, onClose }: Props) {
     tag = (p.kind as string) === "intl" ? "AIRPORT" : "AIRFIELD";
     const runways = parseMaybeJson<{ ident: string; len_m: number; surface: string }[]>(p.runways, []);
     const freqs = parseMaybeJson<{ type: string; mhz: string }[]>(p.freqs, []);
-    items.push({ k: "Elevation", v: `${p.elev_ft} ft` });
+    if (p.elev_ft != null) items.push({ k: "Elevation", v: `${p.elev_ft} ft` });
+    if (p.iata) items.push({ k: "IATA", v: String(p.iata) });
     if (runways[0]) {
       items.push({ k: "Runway", v: runways[0].ident });
       items.push({ k: "Length", v: `${runways[0].len_m} m` });
       items.push({ k: "Surface", v: runways[0].surface });
     }
-    for (const f of freqs) items.push({ k: f.type, v: f.mhz });
+    for (const f of freqs) items.push({ k: f.type, v: `${f.mhz}` });
+  } else if (feature.kind === "weather") {
+    const wd = p.windDir;
+    const wind =
+      p.windKt != null && Number(p.windKt) > 0
+        ? `${wd != null ? String(wd).padStart(3, "0") + "°" : "VRB"} ${Math.round(Number(p.windKt))} kt`
+        : "Calm";
+    title = String(p.icao ?? "METAR");
+    sub = String(p.name ?? "");
+    tag = String(p.category ?? "METAR");
+    items.push({ k: "Wind", v: wind });
+    if (p.gustKt != null) items.push({ k: "Gust", v: `${Math.round(Number(p.gustKt))} kt` });
+    if (p.visibSm != null) items.push({ k: "Visibility", v: `${p.visibSm} SM` });
+    if (p.ceilingFt != null) items.push({ k: "Ceiling", v: `${p.ceilingFt} ft` });
+    if (p.tempC != null) items.push({ k: "Temp", v: `${Math.round(Number(p.tempC))}°C` });
+    if (p.dewpC != null) items.push({ k: "Dewpoint", v: `${Math.round(Number(p.dewpC))}°C` });
+    if (p.qnhHpa != null) items.push({ k: "QNH", v: `${Math.round(Number(p.qnhHpa))} hPa` });
   } else if (feature.kind === "navaid") {
     title = String(p.ident ?? "");
     sub = String(p.name ?? "");
@@ -77,6 +94,9 @@ export function InfoPanel({ feature, onClose }: Props) {
           ))}
         </div>
       )}
+      {feature.kind === "weather" && p.raw ? (
+        <div className="info-raw">{String(p.raw)}</div>
+      ) : null}
     </div>
   );
 }

@@ -46,6 +46,51 @@ paid commercial license.
 - **EAD / national AIP (AIXM)** — authoritative and complete, but access-controlled
   and individually copyrighted per state. Not a casual free source.
 
+## "Allowed for navigation" — the reality (certification vs. provenance)
+
+There is **no certification** that makes a consumer VFR app "legal for
+navigation." On a tablet it is an **Electronic Flight Bag (EFB)** — an advisory
+aid, pilot's discretion. SkyDemon and EasyVFR **disclaim exactly the same way**
+(in their EULA/first-run, not an on-map banner); SkyDemon is even limited from
+"primary navigation in IMC."
+
+What they have that raw free data doesn't is **provenance + currency**, not a
+stamp:
+
+- **EasyVFR / PocketFMS AeroData** is fed from **EUROCONTROL EAD** (AIP, NOTAM,
+  AUP/UUP, plates), **DWD** weather, NASA terrain, EuroGeographics/OSM —
+  refreshed on the **28-day AIRAC cycle**.
+- **SkyDemon renders its own charts** from licensed official-sourced data (it does
+  *not* use the official ICAO chart scans).
+
+### The EUROCONTROL EAD path (how to match them)
+
+- **EAD Basic** — free, instant after registration, but a **human web tool**
+  (browse AIP/charts, build NOTAM PIBs). Not a feed for your app.
+- **EAD Pro** — requires signing an **EAD Data User Agreement**; redistributing
+  AIP data to end users triggers **member-state royalty fees**. This is *why
+  EasyVFR makes in-app registration mandatory* — EUROCONTROL/states require
+  counting third-party end users. EasyVFR's "endorsed by EUROCONTROL/DFS" + EASA
+  GA Safety Award implies favorable/waived terms earned as a recognized tool.
+- **NM data** (AUP/UUP activation, etc.) needs *additional explicit* agreement.
+- **DWD weather** is genuinely **free open data** (GeoNutzV, attribution) — the
+  weather half needs no deal.
+
+**Strategy:** ship now on OFM + OurAirports + free weather (≈ EasyVFR Essential's
+free tier, minus live NOTAM); pursue an EAD Data User Agreement in parallel for
+official provenance + NOTAM/airspace-activation.
+
+## Implemented so far
+
+- ✅ **Airports + frequencies** — live from OurAirports (CC0) via `/api/airports`
+  (Edge function, bbox-filtered, CDN-cached), with the bundled sample as offline
+  fallback.
+- ✅ **Wind & weather** — live METAR via `/api/metar` (aviationweather.gov / NWS,
+  public domain); rendered as flight-category dots + wind arrows, tap for detail.
+- ✅ **Advisory** — first-run acknowledgment + subtle attribution (competitor norm).
+- 🚧 **Airspace / restrictions** — still bundled *sample*; next up via open flightmaps.
+- 🚫 **NOTAM** — `/api/notam` is an honest stub; needs EAD/FAA agreement.
+
 ## Paid add-ons (the proven monetization model)
 
 Official georeferenced charts are **copyrighted and licensed per country** — this

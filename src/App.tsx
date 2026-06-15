@@ -4,16 +4,23 @@ import { Hud } from "./components/Hud";
 import { Toolbar } from "./components/Toolbar";
 import { LayerControl } from "./components/LayerControl";
 import { InfoPanel } from "./components/InfoPanel";
+import { Advisory } from "./components/Advisory";
 import { useOwnship, type PositionMode } from "./nav/useOwnship";
+import { fetchMetars, type Metar } from "./data/weather";
+import { DEFAULT_BBOX } from "./data/region";
 import type { Theme } from "./map/style";
 import type { LayerId } from "./data/aero";
+
+const METAR_REFRESH_MS = 5 * 60 * 1000;
 
 export default function App() {
   const [theme, setTheme] = useState<Theme>("night");
   const [follow, setFollow] = useState(true);
   const [posMode, setPosMode] = useState<PositionMode>("sim");
   const [selected, setSelected] = useState<SelectedFeature | null>(null);
+  const [metars, setMetars] = useState<Metar[]>([]);
   const [layersVisible, setLayersVisible] = useState<Record<LayerId, boolean>>({
+    weather: true,
     airspaces: true,
     airports: true,
     navaids: true,
@@ -27,6 +34,18 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
+  // Live METAR: fetch on mount, then refresh every 5 minutes.
+  useEffect(() => {
+    let active = true;
+    const tick = () => fetchMetars(DEFAULT_BBOX).then((m) => active && setMetars(m));
+    tick();
+    const id = setInterval(tick, METAR_REFRESH_MS);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, []);
+
   const toggleLayer = (id: LayerId) =>
     setLayersVisible((v) => ({ ...v, [id]: !v[id] }));
 
@@ -36,6 +55,7 @@ export default function App() {
         ref={mapRef}
         theme={theme}
         ownship={ship}
+        metars={metars}
         layersVisible={layersVisible}
         follow={follow}
         onSelect={setSelected}
@@ -71,7 +91,11 @@ export default function App() {
 
       {selected && <InfoPanel feature={selected} onClose={() => setSelected(null)} />}
 
-      <div className="attrib">© OpenStreetMap · CARTO — Sample data, not for navigation</div>
+      <div className="attrib">
+        Data: OurAirports · NWS/AWC · © OpenStreetMap · CARTO — advisory only
+      </div>
+
+      <Advisory />
     </div>
   );
 }
