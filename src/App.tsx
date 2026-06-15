@@ -14,18 +14,17 @@ import type { LayerId } from "./data/aero";
 const METAR_REFRESH_MS = 5 * 60 * 1000;
 
 export default function App() {
-  const [theme, setTheme] = useState<Theme>("night");
+  const [theme, setTheme] = useState<Theme>("day");
   const [follow, setFollow] = useState(true);
   const [posMode, setPosMode] = useState<PositionMode>("sim");
   const [selected, setSelected] = useState<SelectedFeature | null>(null);
   const [metars, setMetars] = useState<Metar[]>([]);
   const [windField, setWindField] = useState<WindPoint[]>([]);
   const [layersVisible, setLayersVisible] = useState<Record<LayerId, boolean>>({
+    chart: true,
     wind: true,
     weather: true,
-    airspaces: true,
     airports: true,
-    navaids: true,
   });
 
   const mapRef = useRef<MapHandle>(null);

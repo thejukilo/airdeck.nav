@@ -42,7 +42,6 @@ interface Props {
 
 const QUERY_LAYERS = [
   "airports-symbol",
-  "navaids-symbol",
   "weather-circle",
   "airspaces-fill",
 ] as const;

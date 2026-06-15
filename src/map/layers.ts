@@ -43,43 +43,27 @@ export function addAeroLayers(map: MlMap, data: AeroData) {
     data: { type: "FeatureCollection", features: [] },
   });
 
-  // --- Airspace -----------------------------------------------------------
+  // --- openAIP rendered chart overlay (airspace bands, navaids, reporting
+  //     points, airports) on top of the topo base. Proxied to keep the key
+  //     server-side. This is the layer that gives the real VFR-chart look. ---
+  map.addSource("aipchart", {
+    type: "raster",
+    tiles: ["/api/aiptile?z={z}&x={x}&y={y}"],
+    tileSize: 256,
+    attribution: "© openAIP",
+  });
+  map.addLayer({ id: "aipchart", type: "raster", source: "aipchart" });
+
+  // --- Airspace (geometry from openAIP; kept as a near-invisible click target
+  //     so taps still surface details — the visuals come from the overlay). --
   map.addLayer({
     id: "airspaces-fill",
     type: "fill",
     source: "airspaces",
     paint: {
       "fill-color": airspaceColor,
-      "fill-opacity": ["case", ["==", ["get", "category"], "tma"], 0.06, 0.12],
+      "fill-opacity": ["case", ["==", ["get", "category"], "restricted"], 0.08, 0.01],
     },
-  });
-  map.addLayer({
-    id: "airspaces-line",
-    type: "line",
-    source: "airspaces",
-    paint: {
-      "line-color": airspaceColor,
-      "line-width": 1.5,
-      "line-dasharray": ["case", ["==", ["get", "category"], "restricted"], ["literal", [2, 1.5]], ["literal", [1, 0]]],
-    },
-  });
-  map.addLayer({
-    id: "airspaces-label",
-    type: "symbol",
-    source: "airspaces",
-    layout: {
-      "text-field": ["concat", ["get", "name"], "\n", ["get", "lower"], "–", ["get", "upper"]],
-      "text-size": 11,
-      "text-font": ["Noto Sans Regular"],
-      "text-anchor": "center",
-      "symbol-placement": "point",
-    },
-    paint: {
-      "text-color": airspaceColor,
-      "text-halo-color": "rgba(11,22,34,0.85)",
-      "text-halo-width": 1.5,
-    },
-    minzoom: 8,
   });
 
   // --- Route (built by flight planner; empty for now) ---------------------
@@ -91,38 +75,9 @@ export function addAeroLayers(map: MlMap, data: AeroData) {
     paint: { "line-color": "#ff4fd8", "line-width": 3, "line-opacity": 0.9 },
   });
 
-  // --- Navaids ------------------------------------------------------------
-  map.addLayer({
-    id: "navaids-symbol",
-    type: "circle",
-    source: "navaids",
-    paint: {
-      "circle-radius": 5,
-      "circle-color": "#c08cff",
-      "circle-stroke-color": "#fff",
-      "circle-stroke-width": 1,
-    },
-  });
-  map.addLayer({
-    id: "navaids-label",
-    type: "symbol",
-    source: "navaids",
-    layout: {
-      "text-field": ["get", "ident"],
-      "text-size": 11,
-      "text-font": ["Noto Sans Bold"],
-      "text-offset": [0, 1.1],
-      "text-anchor": "top",
-    },
-    paint: {
-      "text-color": "#d8c4ff",
-      "text-halo-color": "rgba(11,22,34,0.85)",
-      "text-halo-width": 1.4,
-    },
-    minzoom: 7,
-  });
+  // Navaids + reporting points are drawn by the openAIP overlay above.
 
-  // --- Airports -----------------------------------------------------------
+  // --- Airports (OurAirports — kept clickable for frequencies/runways) -----
   map.addLayer({
     id: "airports-symbol",
     type: "circle",
@@ -232,9 +187,8 @@ export function addAeroLayers(map: MlMap, data: AeroData) {
 }
 
 const AERO_LAYER_IDS: Record<string, string[]> = {
-  airspaces: ["airspaces-fill", "airspaces-line", "airspaces-label"],
+  chart: ["aipchart"],
   airports: ["airports-symbol", "airports-label"],
-  navaids: ["navaids-symbol", "navaids-label"],
   weather: ["weather-circle"],
   wind: ["windfield-arrow", "windfield-label"],
 };

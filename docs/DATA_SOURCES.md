@@ -89,9 +89,12 @@ official provenance + NOTAM/airspace-activation.
   public domain); flight-category dots, tap for detail (wind, vis, ceiling, QNH).
 - ✅ **Wind field** — gridded model wind via `/api/wind` (Open-Meteo, CC-BY, no
   key); dense arrows + speed labels across the map (METAR is station-only).
-- ✅ **Airspace / restrictions** — live boundaries via `/api/airspaces` (openAIP).
-  Requires `OPENAIP_API_KEY` in the environment; falls back to the bundled sample
-  when unset. Field mapping (type/class/limits) is best-effort — verify on deploy.
+- ✅ **VFR chart look** — topographic base (**OpenTopoMap**) + the **openAIP
+  rendered tile overlay** (airspace bands, navaids, reporting points) proxied via
+  `/api/aiptile` so the key stays server-side. This is what gives the
+  SkyDemon-style chart appearance.
+- ✅ **Airspace detail** — `/api/airspaces` (openAIP) geometry kept as an
+  invisible click target so taps surface type/class/limits over the overlay.
 - ✅ **Advisory** — first-run acknowledgment + subtle attribution (competitor norm).
 - 🚫 **NOTAM** — `/api/notam` is an honest stub; needs EAD/FAA agreement.
 
@@ -99,7 +102,8 @@ official provenance + NOTAM/airspace-activation.
 
 | Var | Used by | Notes |
 | --- | --- | --- |
-| `OPENAIP_API_KEY` | `/api/airspaces` | Free key from openaip.net. Set in Vercel → Settings → Environment Variables. **Never commit it.** |
+| `OPENAIP_API_KEY` | `/api/airspaces`, `/api/aiptile` | Free key from openaip.net. Set in Vercel → Settings → Environment Variables. **Never commit it.** |
+| `OPENAIP_TILE_LAYER` | `/api/aiptile` | Optional. Overlay layer name, default `openaip` (full). E.g. `airspaces` for airspace-only. |
 
 ## Paid add-ons (the proven monetization model)
 

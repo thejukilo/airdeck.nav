@@ -103,11 +103,10 @@ export async function loadAeroData(
 
 /** Layers the user can toggle, with the swatch color shown in the UI. */
 export const LAYER_DEFS = [
+  { id: "chart", label: "Aero chart", color: "#7aa7ff" },
   { id: "wind", label: "Wind", color: "#7fd0ff" },
   { id: "weather", label: "Airport weather", color: "#33d17a" },
-  { id: "airspaces", label: "Airspace", color: "#7aa7ff" },
   { id: "airports", label: "Airports", color: "#34d1bf" },
-  { id: "navaids", label: "Navaids (sample)", color: "#c08cff" },
 ] as const;
 
 export type LayerId = (typeof LAYER_DEFS)[number]["id"];
