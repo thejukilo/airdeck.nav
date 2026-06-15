@@ -65,6 +65,21 @@ The architecture is deliberately set up so these slot in without rework:
   server / an offline-synced database behind `src/data/aero.ts`.
 - **Vertical profile & terrain awareness.**
 
+## Deployment (Vercel)
+
+The repo is deploy-ready (`vercel.json`, Vite preset). To put it at
+`nav.airdeck.ch`:
+
+1. **Import** the GitHub repo in the Vercel dashboard (New Project → pick
+   `thejukilo/airdeck.nav`). Framework auto-detects as Vite; no env vars needed.
+2. **Add the domain**: Project → Settings → Domains → add `nav.airdeck.ch`.
+3. **DNS**: in the `airdeck.ch` zone, add a `CNAME` record
+   `nav → cname.vercel-dns.com` (Vercel shows the exact target). It verifies and
+   issues TLS automatically.
+
+After the first import, every push to the default branch auto-deploys; pushes to
+other branches get preview URLs.
+
 ## Replacing the sample data
 
 The files in `public/data/*.geojson` are simplified samples around the
