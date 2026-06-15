@@ -28,6 +28,7 @@ export interface SelectedFeature {
 export interface MapHandle {
   recenter: (ship: Ownship | null) => void;
   resetNorth: () => void;
+  getCenter: () => { lng: number; lat: number } | null;
 }
 
 interface Props {
@@ -83,6 +84,10 @@ function MapViewInner(
       }
     },
     resetNorth: () => mapRef.current?.easeTo({ bearing: 0, pitch: 0, duration: 400 }),
+    getCenter: () => {
+      const c = mapRef.current?.getCenter();
+      return c ? { lng: c.lng, lat: c.lat } : null;
+    },
   }));
 
   // --- Init (once) --------------------------------------------------------

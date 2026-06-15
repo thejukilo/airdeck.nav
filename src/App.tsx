@@ -7,6 +7,7 @@ import { LayerControl } from "./components/LayerControl";
 import { InfoPanel } from "./components/InfoPanel";
 import { Advisory } from "./components/Advisory";
 import { AwarenessPanel } from "./components/AwarenessPanel";
+import { SimControl } from "./components/SimControl";
 import { useOwnship, type PositionMode } from "./nav/useOwnship";
 import { computeAwareness, type Awareness } from "./nav/airspace";
 import { fetchMetars, fetchWindField, type Metar, type WindPoint } from "./data/weather";
@@ -35,8 +36,21 @@ export default function App() {
     airports: true,
   });
 
+  // Controllable simulator state.
+  const [simHeading, setSimHeading] = useState(90);
+  const [simAlt, setSimAlt] = useState(2000);
+  const [simGs, setSimGs] = useState(110);
+  const [simRunning, setSimRunning] = useState(true);
+  const [simStart, setSimStart] = useState({ lng: 5.2, lat: 52.4 });
+
   const mapRef = useRef<MapHandle>(null);
-  const ship = useOwnship(posMode);
+  const ship = useOwnship(
+    posMode,
+    { headingDeg: simHeading, altFt: simAlt, gsKt: simGs, running: simRunning },
+    simStart,
+  );
+
+  const wrapHeading = (d: number) => setSimHeading((h) => (((h + d) % 360) + 360) % 360);
 
   // Latest values for the throttled awareness loop (avoids recomputing 60×/s).
   const shipRef = useRef(ship);
@@ -119,6 +133,24 @@ export default function App() {
         onResetNorth={() => mapRef.current?.resetNorth()}
         onTogglePosMode={() => setPosMode((m) => (m === "sim" ? "gps" : "sim"))}
       />
+
+      {posMode === "sim" && (
+        <SimControl
+          headingDeg={simHeading}
+          altFt={simAlt}
+          gsKt={simGs}
+          running={simRunning}
+          onHeading={wrapHeading}
+          onAlt={(d) => setSimAlt((a) => Math.max(0, a + d))}
+          onSpeed={(d) => setSimGs((g) => Math.max(0, g + d))}
+          onToggleRun={() => setSimRunning((r) => !r)}
+          onStartHere={() => {
+            const c = mapRef.current?.getCenter();
+            if (c) setSimStart(c);
+            setSimRunning(true);
+          }}
+        />
+      )}
 
       <div className="mode-pill panel">
         <span className={`dot ${ship?.source === "gps" ? "live" : ""}`} />

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { bearingDeg, destination, type LngLat } from "../lib/geo";
+import { destination, type LngLat } from "../lib/geo";
 
 export interface Ownship {
   pos: LngLat;
@@ -7,34 +7,39 @@ export interface Ownship {
   track: number;
   /** Ground speed, knots. */
   gs: number;
-  /** Altitude, feet (simulated / from GPS where available). */
+  /** Altitude, feet. */
   alt: number;
   source: "sim" | "gps";
 }
 
 export type PositionMode = "sim" | "gps";
 
-// A gentle demo circuit around the Lelystad / Amsterdam area so the moving map
-// has something to show without a real GPS fix.
-const SIM_LEGS: LngLat[] = [
-  { lng: 5.5272, lat: 52.4603 }, // EHLE
-  { lng: 5.2, lat: 52.65 },
-  { lng: 4.9, lat: 52.55 },
-  { lng: 4.95, lat: 52.32 }, // near PAM
-  { lng: 5.3, lat: 52.25 },
-  { lng: 5.6, lat: 52.38 },
-];
+/** Pilot-controllable simulator inputs. */
+export interface SimControls {
+  headingDeg: number;
+  altFt: number;
+  gsKt: number;
+  running: boolean;
+}
 
-const SIM_GS = 110; // kt
-const SIM_ALT = 2000; // ft
-
-export function useOwnship(mode: PositionMode): Ownship | null {
+export function useOwnship(
+  mode: PositionMode,
+  sim: SimControls,
+  simStart: LngLat,
+): Ownship | null {
   const [ship, setShip] = useState<Ownship | null>(null);
-  const legRef = useRef(0);
-  const targetRef = useRef<LngLat>(SIM_LEGS[1]);
-  const posRef = useRef<LngLat>(SIM_LEGS[0]);
 
-  // --- Simulator ----------------------------------------------------------
+  // Latest controls, read by the animation loop without restarting it.
+  const simRef = useRef(sim);
+  simRef.current = sim;
+  const posRef = useRef<LngLat>(simStart);
+
+  // Re-seed the position when the start point changes ("start from here").
+  useEffect(() => {
+    posRef.current = simStart;
+  }, [simStart.lng, simStart.lat]);
+
+  // --- Simulator: fly the set heading at the set speed/altitude ------------
   useEffect(() => {
     if (mode !== "sim") return;
     let raf = 0;
@@ -43,27 +48,17 @@ export function useOwnship(mode: PositionMode): Ownship | null {
     const tick = (now: number) => {
       const dtHr = (now - last) / 3_600_000; // ms -> hours
       last = now;
-      const stepNm = SIM_GS * dtHr;
-
-      const from = posRef.current;
-      const to = targetRef.current;
-      const trk = bearingDeg(from, to);
-      const next = destination(from, trk, stepNm);
-
-      // Advance to the next leg once we're close to the waypoint.
-      if (
-        Math.hypot(to.lng - next.lng, to.lat - next.lat) < 0.01 ||
-        Math.hypot(to.lng - from.lng, to.lat - from.lat) <
-          Math.hypot(next.lng - from.lng, next.lat - from.lat)
-      ) {
-        legRef.current = (legRef.current + 1) % SIM_LEGS.length;
-        targetRef.current = SIM_LEGS[(legRef.current + 1) % SIM_LEGS.length];
-        posRef.current = SIM_LEGS[legRef.current];
-      } else {
-        posRef.current = next;
+      const s = simRef.current;
+      if (s.running) {
+        posRef.current = destination(posRef.current, s.headingDeg, s.gsKt * dtHr);
       }
-
-      setShip({ pos: posRef.current, track: trk, gs: SIM_GS, alt: SIM_ALT, source: "sim" });
+      setShip({
+        pos: posRef.current,
+        track: s.headingDeg,
+        gs: s.running ? s.gsKt : 0,
+        alt: s.altFt,
+        source: "sim",
+      });
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);

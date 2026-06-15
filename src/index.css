@@ -543,6 +543,107 @@ button {
   color: #ff7b7b;
 }
 
+/* ---- Simulator control bar (bottom center) ----------------------------- */
+.simbar {
+  position: absolute;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  padding: 8px;
+  max-width: calc(100vw - 24px);
+}
+
+.sim-run,
+.sim-here {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 52px;
+  border-radius: 11px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sim-run {
+  width: 56px;
+  background: var(--accent);
+  color: #06231f;
+}
+
+.sim-run.on {
+  background: var(--warn);
+}
+
+.sim-run svg {
+  width: 22px;
+  height: 22px;
+}
+
+.sim-pause {
+  width: 14px;
+  height: 14px;
+  border-left: 4px solid currentColor;
+  border-right: 4px solid currentColor;
+}
+
+.sim-here svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sim-stepper {
+  display: flex;
+  align-items: stretch;
+  background: var(--surface-2);
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+.sim-step {
+  width: 40px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+  background: transparent;
+}
+
+.sim-step:active {
+  background: rgba(52, 209, 191, 0.18);
+}
+
+.sim-readout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 70px;
+  padding: 4px 2px;
+}
+
+.sim-val {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 3px;
+}
+
 /* ---- Bottom-left mode pill --------------------------------------------- */
 .mode-pill {
   position: absolute;
