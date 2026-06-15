@@ -1,4 +1,5 @@
 import { fmtHeading } from "../lib/geo";
+import { useDraggable } from "../hooks/useDraggable";
 import { PlayIcon, CrosshairIcon } from "./icons";
 
 interface Props {
@@ -48,8 +49,14 @@ export function SimControl({
   onToggleRun,
   onStartHere,
 }: Props) {
+  const { ref, style, handleProps } = useDraggable();
   return (
-    <div className="simbar panel">
+    <div className="simbar panel" ref={ref} style={style}>
+      <div className="sim-grip" {...handleProps} title="Drag" aria-label="Drag">
+        <span />
+        <span />
+        <span />
+      </div>
       <button
         className={`sim-run ${running ? "on" : ""}`}
         onClick={onToggleRun}

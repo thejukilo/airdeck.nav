@@ -1,5 +1,6 @@
 import type { Waypoint, RoutePlan } from "../nav/route";
 import { fmtHeading } from "../lib/geo";
+import { useDraggable } from "../hooks/useDraggable";
 import { CloseIcon } from "./icons";
 
 interface Props {
@@ -15,13 +16,14 @@ const chipLevel = (c: string) =>
   c === "restricted" || c === "danger" || c === "prohibited" ? "danger" : "warn";
 
 export function RoutePanel({ from, to, plan, gsKt, onClear, onFly }: Props) {
+  const { ref, style, handleProps } = useDraggable();
   if (!from && !to) return null;
 
   const eteMin = plan && gsKt > 1 ? (plan.distanceNm / gsKt) * 60 : null;
 
   return (
-    <div className="route panel">
-      <div className="route-head">
+    <div className="route panel" ref={ref} style={style}>
+      <div className="route-head" {...handleProps}>
         <span className="route-title">Route</span>
         <button className="icon-btn" onClick={onClear} aria-label="Clear route">
           <CloseIcon style={{ width: 18, height: 18 }} />

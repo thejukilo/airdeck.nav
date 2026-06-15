@@ -1,5 +1,6 @@
 import type { SelectedFeature } from "../map/MapView";
 import type { Waypoint } from "../nav/route";
+import { useDraggable } from "../hooks/useDraggable";
 import { CloseIcon } from "./icons";
 
 interface Props {
@@ -23,6 +24,7 @@ function parseMaybeJson<T>(value: unknown, fallback: T): T {
 }
 
 export function InfoPanel({ feature, onClose, onSetRoute }: Props) {
+  const { ref, style, handleProps } = useDraggable();
   const p = feature.properties;
   let title = "";
   let sub = "";
@@ -75,8 +77,8 @@ export function InfoPanel({ feature, onClose, onSetRoute }: Props) {
   }
 
   return (
-    <div className="info panel" role="dialog" aria-label={`${title} details`}>
-      <div className="info-head">
+    <div className="info panel" role="dialog" aria-label={`${title} details`} ref={ref} style={style}>
+      <div className="info-head" {...handleProps}>
         <div>
           <div className="info-title">{title}</div>
           {sub && <div className="info-sub">{sub}</div>}

@@ -326,7 +326,6 @@ button {
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translate(-50%, 12px);
   }
 }
 
@@ -555,6 +554,24 @@ button {
   gap: 6px;
   padding: 8px;
   max-width: calc(100vw - 24px);
+}
+
+.sim-grip {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 8px;
+  align-self: stretch;
+}
+
+.sim-grip span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--text-dim);
+  opacity: 0.6;
 }
 
 .sim-run,
