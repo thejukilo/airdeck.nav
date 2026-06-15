@@ -85,7 +85,7 @@ function inRing(p: LngLat, ring: number[][]): boolean {
   return inside;
 }
 
-function inPolygon(p: LngLat, geom: Polygon | MultiPolygon): boolean {
+export function inPolygon(p: LngLat, geom: Polygon | MultiPolygon): boolean {
   const polys = geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates;
   for (const poly of polys) {
     if (!poly.length) continue;
@@ -153,7 +153,12 @@ export function computeAwareness(
       containingNow.add(f);
       const floorFt = parseAltFt(f.properties.lower);
       const ceilFt = parseAltFt(f.properties.upper) || UNLIMITED;
-      inside.push(hitFor(f, verticalOf(ship.alt, floorFt, ceilFt)));
+      // Only list airspace you're actually within vertically too — a TMA whose
+      // floor is far above you (e.g. CTA at FL100 while you're at 3000') is not
+      // something you're "in".
+      if (verticalOf(ship.alt, floorFt, ceilFt) === "inside") {
+        inside.push(hitFor(f, "inside"));
+      }
     }
   }
 

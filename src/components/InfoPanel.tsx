@@ -1,9 +1,11 @@
 import type { SelectedFeature } from "../map/MapView";
+import type { Waypoint } from "../nav/route";
 import { CloseIcon } from "./icons";
 
 interface Props {
   feature: SelectedFeature;
   onClose: () => void;
+  onSetRoute?: (role: "from" | "to", wp: Waypoint) => void;
 }
 
 interface Item {
@@ -20,7 +22,7 @@ function parseMaybeJson<T>(value: unknown, fallback: T): T {
   }
 }
 
-export function InfoPanel({ feature, onClose }: Props) {
+export function InfoPanel({ feature, onClose, onSetRoute }: Props) {
   const p = feature.properties;
   let title = "";
   let sub = "";
@@ -96,6 +98,27 @@ export function InfoPanel({ feature, onClose }: Props) {
       )}
       {feature.kind === "weather" && p.raw ? (
         <div className="info-raw">{String(p.raw)}</div>
+      ) : null}
+      {feature.kind === "airport" && feature.lngLat && onSetRoute ? (
+        <div className="info-actions">
+          {(["from", "to"] as const).map((role) => (
+            <button
+              key={role}
+              className="info-act"
+              onClick={() =>
+                onSetRoute(role, {
+                  icao: String(p.icao ?? ""),
+                  name: String(p.name ?? ""),
+                  lng: feature.lngLat!.lng,
+                  lat: feature.lngLat!.lat,
+                  elevFt: typeof p.elev_ft === "number" ? p.elev_ft : null,
+                })
+              }
+            >
+              {role === "from" ? "Set departure" : "Set destination"}
+            </button>
+          ))}
+        </div>
       ) : null}
     </div>
   );

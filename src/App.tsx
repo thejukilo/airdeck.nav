@@ -5,11 +5,14 @@ import { Hud } from "./components/Hud";
 import { Toolbar } from "./components/Toolbar";
 import { LayerControl } from "./components/LayerControl";
 import { InfoPanel } from "./components/InfoPanel";
+import type { FeatureCollection, LineString } from "geojson";
 import { Advisory } from "./components/Advisory";
 import { AwarenessPanel } from "./components/AwarenessPanel";
 import { SimControl } from "./components/SimControl";
+import { RoutePanel } from "./components/RoutePanel";
 import { useOwnship, type PositionMode } from "./nav/useOwnship";
 import { computeAwareness, type Awareness } from "./nav/airspace";
+import { planRoute, type RoutePlan, type Waypoint } from "./nav/route";
 import { fetchMetars, fetchWindField, type Metar, type WindPoint } from "./data/weather";
 import { fetchAirspaces } from "./data/aero";
 import { DEFAULT_BBOX } from "./data/region";
@@ -28,6 +31,10 @@ const EMPTY_AIRSPACES: AeroData["airspaces"] = {
   type: "FeatureCollection",
   features: [],
 };
+const EMPTY_LINE: FeatureCollection<LineString> = {
+  type: "FeatureCollection",
+  features: [],
+};
 
 type AirspaceFeature = Feature<Polygon | MultiPolygon, AirspaceProps>;
 
@@ -40,6 +47,10 @@ export default function App() {
   const [windField, setWindField] = useState<WindPoint[]>([]);
   const [awareness, setAwareness] = useState<Awareness | null>(null);
   const [airspaces, setAirspaces] = useState<AeroData["airspaces"]>(EMPTY_AIRSPACES);
+  const [routeFrom, setRouteFrom] = useState<Waypoint | null>(null);
+  const [routeTo, setRouteTo] = useState<Waypoint | null>(null);
+  const [routePlan, setRoutePlan] = useState<RoutePlan | null>(null);
+  const [routeLine, setRouteLine] = useState<FeatureCollection<LineString>>(EMPTY_LINE);
   const [layersVisible, setLayersVisible] = useState<Record<LayerId, boolean>>({
     chart: true,
     restrictions: true,
@@ -137,8 +148,50 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
+  // Plan the route whenever both endpoints are set.
+  useEffect(() => {
+    if (!routeFrom || !routeTo) {
+      setRoutePlan(null);
+      setRouteLine(EMPTY_LINE);
+      return;
+    }
+    let active = true;
+    const pad = 0.3;
+    const bbox: [number, number, number, number] = [
+      Math.min(routeFrom.lng, routeTo.lng) - pad,
+      Math.min(routeFrom.lat, routeTo.lat) - pad,
+      Math.max(routeFrom.lng, routeTo.lng) + pad,
+      Math.max(routeFrom.lat, routeTo.lat) + pad,
+    ];
+    fetchAirspaces(bbox).then((fc) => {
+      if (!active) return;
+      const plan = planRoute(routeFrom, routeTo, fc.features as AirspaceFeature[]);
+      setRoutePlan(plan);
+      setRouteLine(plan.line);
+    });
+    return () => {
+      active = false;
+    };
+  }, [routeFrom, routeTo]);
+
   const toggleLayer = (id: LayerId) =>
     setLayersVisible((v) => ({ ...v, [id]: !v[id] }));
+
+  const setRouteEnd = (role: "from" | "to", wp: Waypoint) => {
+    if (role === "from") setRouteFrom(wp);
+    else setRouteTo(wp);
+    setSelected(null);
+  };
+
+  const flyRoute = () => {
+    if (!routePlan) return;
+    setSimStart({ lng: routePlan.from.lng, lat: routePlan.from.lat });
+    setSimHeading(Math.round(routePlan.bearingDeg));
+    setSimAlt(routePlan.recommendedAltFt);
+    setSimRunning(true);
+    setFollow(true);
+    setPosMode("sim");
+  };
 
   const activeAirspaces = awareness?.inside.map((h) => h.name) ?? [];
 
@@ -151,6 +204,7 @@ export default function App() {
         metars={metars}
         windField={windField}
         airspaces={airspaces}
+        route={routeLine}
         layersVisible={layersVisible}
         follow={follow}
         activeAirspaces={activeAirspaces}
@@ -209,7 +263,25 @@ export default function App() {
             : "Starting…"}
       </div>
 
-      {selected && <InfoPanel feature={selected} onClose={() => setSelected(null)} />}
+      <RoutePanel
+        from={routeFrom}
+        to={routeTo}
+        plan={routePlan}
+        gsKt={simGs}
+        onClear={() => {
+          setRouteFrom(null);
+          setRouteTo(null);
+        }}
+        onFly={flyRoute}
+      />
+
+      {selected && (
+        <InfoPanel
+          feature={selected}
+          onClose={() => setSelected(null)}
+          onSetRoute={setRouteEnd}
+        />
+      )}
 
       <div className="attrib">
         Data: openAIP · OurAirports · NWS/AWC · Open-Meteo · © OpenStreetMap ·

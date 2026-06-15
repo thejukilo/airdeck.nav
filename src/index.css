@@ -644,6 +644,173 @@ button {
   margin-top: 3px;
 }
 
+/* ---- Info panel route actions ------------------------------------------ */
+.info-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.info-act {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.info-act:active {
+  background: var(--accent);
+  color: #06231f;
+}
+
+/* ---- Route panel (top right) ------------------------------------------- */
+.route {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: 76px;
+  z-index: 25;
+  width: 280px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+
+.route-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.route-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.route-ends {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.route-end {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-2);
+  border-radius: 9px;
+  padding: 8px 10px;
+}
+
+.route-role {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+}
+
+.route-icao {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.route-arrow {
+  color: var(--text-dim);
+  font-size: 18px;
+}
+
+.route-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.route-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--surface-2);
+  border-radius: 9px;
+  padding: 8px 4px;
+}
+
+.route-stat .v {
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.route-stat .v.accent {
+  color: var(--accent);
+}
+
+.route-stat .k {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.route-cross-head {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  margin: 14px 0 6px;
+}
+
+.route-clear {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5fe39a;
+  padding: 6px 0;
+}
+
+.route-cross {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.route-cross-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.route-cross-band {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.route-fly {
+  width: 100%;
+  height: var(--tap);
+  margin-top: 14px;
+  border-radius: 11px;
+  background: var(--accent);
+  color: #06231f;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.route-fly:active {
+  transform: scale(0.99);
+}
+
+.route-line-paint {
+  /* placeholder for documentation; styling done in layers.ts */
+}
+
 /* ---- Bottom-left mode pill --------------------------------------------- */
 .mode-pill {
   position: absolute;

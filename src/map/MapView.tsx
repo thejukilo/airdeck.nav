@@ -7,6 +7,7 @@ import {
 } from "react";
 import maplibregl, { Map as MlMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import type { FeatureCollection, LineString } from "geojson";
 import { baseStyle, type BaseMap } from "./style";
 import {
   addAeroLayers,
@@ -23,6 +24,7 @@ import type { Metar, WindPoint } from "../data/weather";
 export interface SelectedFeature {
   kind: "airport" | "navaid" | "airspace" | "weather";
   properties: Record<string, unknown>;
+  lngLat?: { lng: number; lat: number };
 }
 
 export interface MapHandle {
@@ -37,6 +39,7 @@ interface Props {
   metars: Metar[];
   windField: WindPoint[];
   airspaces: AeroData["airspaces"];
+  route: FeatureCollection<LineString>;
   layersVisible: Record<LayerId, boolean>;
   follow: boolean;
   /** names of airspaces the ownship is currently inside (highlighted) */
@@ -66,6 +69,7 @@ function MapViewInner(
     metars,
     windField,
     airspaces,
+    route,
     layersVisible,
     follow,
     activeAirspaces,
@@ -117,6 +121,7 @@ function MapViewInner(
         applyVisibility();
         applyActive();
         pushAirspaces();
+        pushRoute();
         pushMetars();
         pushWindField();
       } catch (err) {
@@ -142,7 +147,11 @@ function MapViewInner(
             : f.layer.id === "weather-circle"
               ? "weather"
               : "airspace";
-      onSelect({ kind, properties: f.properties ?? {} });
+      const lngLat =
+        f.geometry.type === "Point"
+          ? { lng: f.geometry.coordinates[0], lat: f.geometry.coordinates[1] }
+          : undefined;
+      onSelect({ kind, properties: f.properties ?? {}, lngLat });
     });
 
     const setCursor = (c: string) => () => (map.getCanvas().style.cursor = c);
@@ -174,6 +183,7 @@ function MapViewInner(
         applyVisibility();
         applyActive();
         pushAirspaces();
+        pushRoute();
         pushOwnship();
         pushMetars();
         pushWindField();
@@ -239,6 +249,15 @@ function MapViewInner(
     src?.setData(airspaces);
   }
   useEffect(pushAirspaces, [airspaces]);
+
+  // --- Route line ---------------------------------------------------------
+  function pushRoute() {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const src = map.getSource("route") as maplibregl.GeoJSONSource | undefined;
+    src?.setData(route);
+  }
+  useEffect(pushRoute, [route]);
 
   // --- Weather (METAR) ----------------------------------------------------
   function pushMetars() {
