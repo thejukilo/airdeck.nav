@@ -163,7 +163,7 @@ export default function App() {
       return;
     }
     let active = true;
-    const pad = 0.3;
+    const pad = 0.5;
     const bbox: [number, number, number, number] = [
       Math.min(routeFrom.lng, routeTo.lng) - pad,
       Math.min(routeFrom.lat, routeTo.lat) - pad,
