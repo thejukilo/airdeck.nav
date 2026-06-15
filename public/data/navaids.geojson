@@ -1,0 +1,32 @@
+{
+  "type": "FeatureCollection",
+  "name": "navaids",
+  "note": "Sample VFR data for development. NOT FOR NAVIGATION.",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [5.011667, 52.330556] },
+      "properties": { "ident": "PAM", "name": "Pampus", "type": "VOR/DME", "mhz": "117.80" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [4.750833, 52.328889] },
+      "properties": { "ident": "SPL", "name": "Schiphol", "type": "VOR/DME", "mhz": "108.40" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [4.437222, 51.956944] },
+      "properties": { "ident": "RTM", "name": "Rotterdam", "type": "VOR/DME", "mhz": "110.40" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [5.853611, 51.108889] },
+      "properties": { "ident": "EEL", "name": "Eelde", "type": "NDB", "mhz": "382.00" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [6.667500, 52.733333] },
+      "properties": { "ident": "HDR", "name": "Den Helder", "type": "VOR", "mhz": "115.50" }
+    }
+  ]
+}

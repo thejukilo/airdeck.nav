@@ -1,0 +1,103 @@
+{
+  "type": "FeatureCollection",
+  "name": "airports",
+  "note": "Sample VFR data for development. Replace with a licensed source (e.g. OpenAIP) for operational use. NOT FOR NAVIGATION.",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [4.764167, 52.308611] },
+      "properties": {
+        "icao": "EHAM",
+        "name": "Amsterdam Schiphol",
+        "kind": "intl",
+        "elev_ft": -11,
+        "runways": [{ "ident": "18R/36L", "len_m": 3800, "surface": "asphalt" }],
+        "freqs": [{ "type": "TWR", "mhz": "119.225" }, { "type": "ATIS", "mhz": "108.400" }]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [5.527222, 52.460278] },
+      "properties": {
+        "icao": "EHLE",
+        "name": "Lelystad",
+        "kind": "ga",
+        "elev_ft": -13,
+        "runways": [{ "ident": "05/23", "len_m": 2700, "surface": "asphalt" }],
+        "freqs": [{ "type": "TWR", "mhz": "124.150" }, { "type": "INFO", "mhz": "135.605" }]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [4.437222, 51.956944] },
+      "properties": {
+        "icao": "EHRD",
+        "name": "Rotterdam The Hague",
+        "kind": "intl",
+        "elev_ft": -15,
+        "runways": [{ "ident": "06/24", "len_m": 2200, "surface": "asphalt" }],
+        "freqs": [{ "type": "TWR", "mhz": "118.205" }, { "type": "ATIS", "mhz": "110.400" }]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [5.146944, 52.192222] },
+      "properties": {
+        "icao": "EHHV",
+        "name": "Hilversum",
+        "kind": "ga",
+        "elev_ft": 3,
+        "runways": [{ "ident": "07/25", "len_m": 920, "surface": "grass" }],
+        "freqs": [{ "type": "INFO", "mhz": "118.925" }]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [4.834444, 53.115556] },
+      "properties": {
+        "icao": "EHTX",
+        "name": "Texel",
+        "kind": "ga",
+        "elev_ft": 1,
+        "runways": [{ "ident": "04/22", "len_m": 730, "surface": "grass" }],
+        "freqs": [{ "type": "INFO", "mhz": "119.305" }]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [6.579722, 53.119722] },
+      "properties": {
+        "icao": "EHGG",
+        "name": "Groningen Eelde",
+        "kind": "intl",
+        "elev_ft": 17,
+        "runways": [{ "ident": "05/23", "len_m": 2500, "surface": "asphalt" }],
+        "freqs": [{ "type": "TWR", "mhz": "120.305" }]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [4.552500, 51.554722] },
+      "properties": {
+        "icao": "EHSE",
+        "name": "Seppe (Breda Intl)",
+        "kind": "ga",
+        "elev_ft": 30,
+        "runways": [{ "ident": "07/25", "len_m": 700, "surface": "asphalt" }],
+        "freqs": [{ "type": "INFO", "mhz": "129.730" }]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [5.762222, 51.449722] },
+      "properties": {
+        "icao": "EHBD",
+        "name": "Budel Kempen",
+        "kind": "ga",
+        "elev_ft": 114,
+        "runways": [{ "ident": "04/22", "len_m": 1199, "surface": "grass" }],
+        "freqs": [{ "type": "INFO", "mhz": "122.305" }]
+      }
+    }
+  ]
+}
