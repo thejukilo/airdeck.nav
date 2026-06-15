@@ -65,6 +65,14 @@ export function addAeroLayers(map: MlMap, data: AeroData) {
       "fill-opacity": ["case", ["==", ["get", "category"], "restricted"], 0.08, 0.01],
     },
   });
+  // Bright highlight for the airspace(s) the ownship is currently inside.
+  map.addLayer({
+    id: "airspaces-active",
+    type: "line",
+    source: "airspaces",
+    filter: ["in", ["get", "name"], ["literal", []]],
+    paint: { "line-color": "#ffd23f", "line-width": 3, "line-opacity": 0.95 },
+  });
 
   // --- Route (built by flight planner; empty for now) ---------------------
   map.addLayer({

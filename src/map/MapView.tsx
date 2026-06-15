@@ -7,7 +7,7 @@ import {
 } from "react";
 import maplibregl, { Map as MlMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { baseStyle, type Theme } from "./style";
+import { baseStyle, type BaseMap } from "./style";
 import {
   addAeroLayers,
   makeOwnshipImage,
@@ -17,7 +17,7 @@ import {
 import { loadAeroData } from "../data/aero";
 import { DEFAULT_BBOX } from "../data/region";
 import type { Ownship } from "../nav/useOwnship";
-import type { LayerId } from "../data/aero";
+import type { AeroData, LayerId } from "../data/aero";
 import type { Metar, WindPoint } from "../data/weather";
 
 export interface SelectedFeature {
@@ -31,13 +31,16 @@ export interface MapHandle {
 }
 
 interface Props {
-  theme: Theme;
+  basemap: BaseMap;
   ownship: Ownship | null;
   metars: Metar[];
   windField: WindPoint[];
   layersVisible: Record<LayerId, boolean>;
   follow: boolean;
+  /** names of airspaces the ownship is currently inside (highlighted) */
+  activeAirspaces: string[];
   onSelect: (f: SelectedFeature | null) => void;
+  onAirspaces: (fc: AeroData["airspaces"]) => void;
 }
 
 const QUERY_LAYERS = [
@@ -56,7 +59,17 @@ function imagesFor(map: MlMap) {
 }
 
 function MapViewInner(
-  { theme, ownship, metars, windField, layersVisible, follow, onSelect }: Props,
+  {
+    basemap,
+    ownship,
+    metars,
+    windField,
+    layersVisible,
+    follow,
+    activeAirspaces,
+    onSelect,
+    onAirspaces,
+  }: Props,
   ref: Ref<MapHandle>,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,7 +90,7 @@ function MapViewInner(
     if (!containerRef.current) return;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: baseStyle(theme),
+      style: baseStyle(basemap),
       center: [5.2, 52.4],
       zoom: 8.5,
       attributionControl: false,
@@ -95,8 +108,10 @@ function MapViewInner(
         const data = await loadAeroData(DEFAULT_BBOX);
         addAeroLayers(map, data);
         readyRef.current = true;
+        onAirspaces(data.airspaces);
         // Apply any state that changed before load finished.
         applyVisibility();
+        applyActive();
         pushMetars();
         pushWindField();
       } catch (err) {
@@ -139,19 +154,21 @@ function MapViewInner(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- Theme switches restyle the base; re-add aero layers afterward. -----
+  // --- Base map switches restyle the base; re-add aero layers afterward. --
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
     readyRef.current = false;
-    map.setStyle(baseStyle(theme));
+    map.setStyle(baseStyle(basemap));
     map.once("styledata", async () => {
       imagesFor(map);
       try {
         const data = await loadAeroData(DEFAULT_BBOX);
         addAeroLayers(map, data);
         readyRef.current = true;
+        onAirspaces(data.airspaces);
         applyVisibility();
+        applyActive();
         pushOwnship();
         pushMetars();
         pushWindField();
@@ -160,7 +177,19 @@ function MapViewInner(
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme]);
+  }, [basemap]);
+
+  // --- Highlight the airspace(s) the ownship is inside --------------------
+  function applyActive() {
+    const map = mapRef.current;
+    if (!map || !readyRef.current || !map.getLayer("airspaces-active")) return;
+    map.setFilter("airspaces-active", [
+      "in",
+      ["get", "name"],
+      ["literal", activeAirspaces],
+    ]);
+  }
+  useEffect(applyActive, [activeAirspaces]);
 
   // --- Layer visibility ---------------------------------------------------
   function applyVisibility() {
