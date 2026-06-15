@@ -4,6 +4,38 @@
  */
 import { bboxParam, DEFAULT_BBOX } from "./region";
 
+/** A single sampled point in the gridded wind field. */
+export interface WindPoint {
+  lng: number;
+  lat: number;
+  /** Direction the wind blows FROM, degrees true. */
+  windDir: number;
+  windKt: number;
+}
+
+interface WindFeature {
+  geometry: { coordinates: [number, number] };
+  properties: { windDir: number; windKt: number };
+}
+
+export async function fetchWindField(
+  bbox: [number, number, number, number] = DEFAULT_BBOX,
+): Promise<WindPoint[]> {
+  try {
+    const res = await fetch(`/api/wind?bbox=${bboxParam(bbox)}`);
+    if (!res.ok) return [];
+    const data = (await res.json()) as { features?: WindFeature[] };
+    return (data.features ?? []).map((f) => ({
+      lng: f.geometry.coordinates[0],
+      lat: f.geometry.coordinates[1],
+      windDir: f.properties.windDir,
+      windKt: f.properties.windKt,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export type FlightCategory = "VFR" | "MVFR" | "IFR" | "LIFR" | "UNKN";
 
 export interface Metar {

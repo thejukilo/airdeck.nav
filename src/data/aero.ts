@@ -32,6 +32,7 @@ export interface NavaidProps {
 export interface AirspaceProps {
   name: string;
   category: AirspaceCategory;
+  typeName?: string;
   class: string;
   lower: string;
   upper: string;
@@ -69,23 +70,42 @@ async function loadAirports(
   return load<AeroData["airports"]>("/data/airports.geojson");
 }
 
+/**
+ * Airspace comes from the live /api/airspaces function (openAIP). Falls back to
+ * the bundled sample when the API key isn't set or the call fails.
+ */
+async function loadAirspaces(
+  bbox: [number, number, number, number],
+): Promise<AeroData["airspaces"]> {
+  try {
+    const res = await fetch(`/api/airspaces?bbox=${bbox.join(",")}`);
+    if (res.ok) {
+      const fc = (await res.json()) as AeroData["airspaces"];
+      if (fc.features?.length) return fc;
+    }
+  } catch {
+    /* fall through to bundled sample */
+  }
+  return load<AeroData["airspaces"]>("/data/airspaces.geojson");
+}
+
 export async function loadAeroData(
   bbox: [number, number, number, number],
 ): Promise<AeroData> {
   const [airports, navaids, airspaces] = await Promise.all([
     loadAirports(bbox),
-    // Navaids + airspace are bundled samples for now. Real, AIRAC-current
-    // airspace will come from open flightmaps (AIP-derived, commercial-OK).
+    // Navaids are a bundled sample for now.
     load<AeroData["navaids"]>("/data/navaids.geojson"),
-    load<AeroData["airspaces"]>("/data/airspaces.geojson"),
+    loadAirspaces(bbox),
   ]);
   return { airports, navaids, airspaces };
 }
 
 /** Layers the user can toggle, with the swatch color shown in the UI. */
 export const LAYER_DEFS = [
-  { id: "weather", label: "Wind & weather", color: "#33d17a" },
-  { id: "airspaces", label: "Airspace (sample)", color: "#7aa7ff" },
+  { id: "wind", label: "Wind", color: "#7fd0ff" },
+  { id: "weather", label: "Airport weather", color: "#33d17a" },
+  { id: "airspaces", label: "Airspace", color: "#7aa7ff" },
   { id: "airports", label: "Airports", color: "#34d1bf" },
   { id: "navaids", label: "Navaids (sample)", color: "#c08cff" },
 ] as const;

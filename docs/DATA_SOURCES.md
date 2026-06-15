@@ -5,22 +5,22 @@ free, what it can legally use in a commercial product, and what must be sold as
 licensed add-ons.** Aviation data licensing is restrictive and varies per
 country — read the license, not just the price.
 
-> Decision (2026-06): the **free tier is built on open flightmaps + OurAirports**
-> (both commercial-safe). **openAIP is dropped from the base** because its free
-> license is non-commercial.
+> Decision (2026-06): **airspace is sourced from openAIP** (its license permits
+> shipping data inside a paid app); airports from **OurAirports** (CC0); weather
+> from **Open-Meteo / NWS**. open flightmaps remains a good alternative base.
 
 ## The licensing catch (read this first)
 
-The two main "free" aeronautical databases have **opposite licenses**:
+The two main aeronautical databases:
 
-| Database | License | Commercial use? |
+| Database | License | Use in our app? |
 | --- | --- | --- |
-| **open flightmaps (OFMA)** | OFMA General Users' License — worldwide, royalty-free, non-exclusive | ✅ **Yes**, explicitly includes commercial use |
-| **openAIP** | CC BY-NC-SA | ❌ **No** on the free license (non-commercial). Paid commercial license + API available. Limited exception: may ship openAIP data inside a paid app *as long as you don't exclusively sell the data*. |
+| **openAIP** | CC BY-NC 4.0 | ✅ **Yes.** Per openAIP's own terms, third parties **may ship openAIP data inside paid/commercial applications as long as they don't *exclusively* sell the data** (e.g. as a paid data-only update). Attribution required; data must stay free for everyone. |
+| **open flightmaps (OFMA)** | OFMA General Users' License — royalty-free, non-exclusive | ✅ Yes, explicitly includes commercial use. Requires attribution + an error-reporting path. |
 
-➡️ We standardize on **open flightmaps** as the base so the product is
-commercially clean from day one. openAIP can be revisited later *only* under its
-paid commercial license.
+➡️ We use **openAIP** for airspace (clean API, geometry resolved) under the
+ship-inside-a-paid-app clause, **with visible attribution** and without ever
+selling the data standalone. OFM stays available as an alternative.
 
 ## Free data we can use (commercial-safe)
 
@@ -85,11 +85,21 @@ official provenance + NOTAM/airspace-activation.
 - ✅ **Airports + frequencies** — live from OurAirports (CC0) via `/api/airports`
   (Edge function, bbox-filtered, CDN-cached), with the bundled sample as offline
   fallback.
-- ✅ **Wind & weather** — live METAR via `/api/metar` (aviationweather.gov / NWS,
-  public domain); rendered as flight-category dots + wind arrows, tap for detail.
+- ✅ **Airport weather** — live METAR via `/api/metar` (aviationweather.gov / NWS,
+  public domain); flight-category dots, tap for detail (wind, vis, ceiling, QNH).
+- ✅ **Wind field** — gridded model wind via `/api/wind` (Open-Meteo, CC-BY, no
+  key); dense arrows + speed labels across the map (METAR is station-only).
+- ✅ **Airspace / restrictions** — live boundaries via `/api/airspaces` (openAIP).
+  Requires `OPENAIP_API_KEY` in the environment; falls back to the bundled sample
+  when unset. Field mapping (type/class/limits) is best-effort — verify on deploy.
 - ✅ **Advisory** — first-run acknowledgment + subtle attribution (competitor norm).
-- 🚧 **Airspace / restrictions** — still bundled *sample*; next up via open flightmaps.
 - 🚫 **NOTAM** — `/api/notam` is an honest stub; needs EAD/FAA agreement.
+
+### Environment variables
+
+| Var | Used by | Notes |
+| --- | --- | --- |
+| `OPENAIP_API_KEY` | `/api/airspaces` | Free key from openaip.net. Set in Vercel → Settings → Environment Variables. **Never commit it.** |
 
 ## Paid add-ons (the proven monetization model)
 

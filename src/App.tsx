@@ -6,7 +6,7 @@ import { LayerControl } from "./components/LayerControl";
 import { InfoPanel } from "./components/InfoPanel";
 import { Advisory } from "./components/Advisory";
 import { useOwnship, type PositionMode } from "./nav/useOwnship";
-import { fetchMetars, type Metar } from "./data/weather";
+import { fetchMetars, fetchWindField, type Metar, type WindPoint } from "./data/weather";
 import { DEFAULT_BBOX } from "./data/region";
 import type { Theme } from "./map/style";
 import type { LayerId } from "./data/aero";
@@ -19,7 +19,9 @@ export default function App() {
   const [posMode, setPosMode] = useState<PositionMode>("sim");
   const [selected, setSelected] = useState<SelectedFeature | null>(null);
   const [metars, setMetars] = useState<Metar[]>([]);
+  const [windField, setWindField] = useState<WindPoint[]>([]);
   const [layersVisible, setLayersVisible] = useState<Record<LayerId, boolean>>({
+    wind: true,
     weather: true,
     airspaces: true,
     airports: true,
@@ -34,10 +36,13 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  // Live METAR: fetch on mount, then refresh every 5 minutes.
+  // Live weather: METAR + gridded wind field on mount, refreshed every 5 min.
   useEffect(() => {
     let active = true;
-    const tick = () => fetchMetars(DEFAULT_BBOX).then((m) => active && setMetars(m));
+    const tick = () => {
+      fetchMetars(DEFAULT_BBOX).then((m) => active && setMetars(m));
+      fetchWindField(DEFAULT_BBOX).then((w) => active && setWindField(w));
+    };
     tick();
     const id = setInterval(tick, METAR_REFRESH_MS);
     return () => {
@@ -56,6 +61,7 @@ export default function App() {
         theme={theme}
         ownship={ship}
         metars={metars}
+        windField={windField}
         layersVisible={layersVisible}
         follow={follow}
         onSelect={setSelected}
@@ -92,7 +98,8 @@ export default function App() {
       {selected && <InfoPanel feature={selected} onClose={() => setSelected(null)} />}
 
       <div className="attrib">
-        Data: OurAirports · NWS/AWC · © OpenStreetMap · CARTO — advisory only
+        Data: openAIP · OurAirports · NWS/AWC · Open-Meteo · © OpenStreetMap ·
+        CARTO — advisory only
       </div>
 
       <Advisory />

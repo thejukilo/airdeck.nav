@@ -65,11 +65,11 @@ export function InfoPanel({ feature, onClose }: Props) {
     items.push({ k: "Type", v: String(p.type ?? "") });
   } else {
     title = String(p.name ?? "");
-    sub = `Class ${p.class}`;
-    tag = String(p.category ?? "").toUpperCase();
-    items.push({ k: "Lower", v: String(p.lower ?? "") });
-    items.push({ k: "Upper", v: String(p.upper ?? "") });
-    items.push({ k: "Class", v: String(p.class ?? "") });
+    sub = p.class ? `Class ${p.class}` : "";
+    tag = String(p.typeName ?? p.category ?? "").toUpperCase();
+    if (p.lower) items.push({ k: "Lower", v: String(p.lower) });
+    if (p.upper) items.push({ k: "Upper", v: String(p.upper) });
+    if (p.class) items.push({ k: "Class", v: String(p.class) });
   }
 
   return (

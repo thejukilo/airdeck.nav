@@ -18,7 +18,7 @@ import { loadAeroData } from "../data/aero";
 import { DEFAULT_BBOX } from "../data/region";
 import type { Ownship } from "../nav/useOwnship";
 import type { LayerId } from "../data/aero";
-import type { Metar } from "../data/weather";
+import type { Metar, WindPoint } from "../data/weather";
 
 export interface SelectedFeature {
   kind: "airport" | "navaid" | "airspace" | "weather";
@@ -34,6 +34,7 @@ interface Props {
   theme: Theme;
   ownship: Ownship | null;
   metars: Metar[];
+  windField: WindPoint[];
   layersVisible: Record<LayerId, boolean>;
   follow: boolean;
   onSelect: (f: SelectedFeature | null) => void;
@@ -56,7 +57,7 @@ function imagesFor(map: MlMap) {
 }
 
 function MapViewInner(
-  { theme, ownship, metars, layersVisible, follow, onSelect }: Props,
+  { theme, ownship, metars, windField, layersVisible, follow, onSelect }: Props,
   ref: Ref<MapHandle>,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -98,6 +99,7 @@ function MapViewInner(
         // Apply any state that changed before load finished.
         applyVisibility();
         pushMetars();
+        pushWindField();
       } catch (err) {
         console.error("Failed to load aeronautical data", err);
       }
@@ -153,6 +155,7 @@ function MapViewInner(
         applyVisibility();
         pushOwnship();
         pushMetars();
+        pushWindField();
       } catch (err) {
         console.error(err);
       }
@@ -224,6 +227,22 @@ function MapViewInner(
     });
   }
   useEffect(pushMetars, [metars]);
+
+  // --- Wind field (gridded) -----------------------------------------------
+  function pushWindField() {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const src = map.getSource("windfield") as maplibregl.GeoJSONSource | undefined;
+    src?.setData({
+      type: "FeatureCollection",
+      features: windField.map((w) => ({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [w.lng, w.lat] },
+        properties: { windDir: w.windDir, windKt: w.windKt },
+      })),
+    });
+  }
+  useEffect(pushWindField, [windField]);
 
   return <div ref={containerRef} className="map-root" />;
 }
